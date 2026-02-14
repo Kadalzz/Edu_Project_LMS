@@ -1,0 +1,131 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type AuthResponse {
+  accessToken: String!
+  refreshToken: String!
+  user: UserModel!
+}
+
+input ChangePasswordInput {
+  currentPassword: String!
+  newPassword: String!
+}
+
+type ClassroomModel {
+  description: String
+  id: ID!
+  isActive: Boolean!
+  name: String!
+  studentCount: Int
+  subjectCount: Int
+}
+
+input CreateStudentInput {
+  classroomId: String!
+  email: String!
+  parentName: String
+  password: String!
+  studentName: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+type MessageResponse {
+  message: String!
+  success: Boolean!
+}
+
+type Mutation {
+  """Change password"""
+  changePassword(input: ChangePasswordInput!): MessageResponse!
+
+  """Teacher creates a student account"""
+  createStudent(input: CreateStudentInput!): UserModel!
+
+  """Login with email and password"""
+  login(input: LoginInput!): AuthResponse!
+
+  """Refresh access token"""
+  refreshToken(input: RefreshTokenInput!): RefreshTokenResponse!
+
+  """Toggle student active status"""
+  toggleStudentActive(studentUserId: String!): UserModel!
+
+  """Update own profile"""
+  updateProfile(input: UpdateProfileInput!): UserModel!
+}
+
+type Query {
+  """Health check endpoint"""
+  health: String!
+
+  """Get current logged-in user"""
+  me: UserModel!
+
+  """Get classrooms for current teacher"""
+  myClassrooms: [ClassroomModel!]!
+
+  """Get all students for current teacher"""
+  myStudents: [StudentWithUser!]!
+
+  """API version"""
+  version: String!
+}
+
+input RefreshTokenInput {
+  refreshToken: String!
+}
+
+type RefreshTokenResponse {
+  accessToken: String!
+  refreshToken: String!
+}
+
+type StudentWithUser {
+  classroom: ClassroomModel
+  createdAt: DateTime!
+  currentXP: Int!
+  id: ID!
+  level: Int!
+  totalXP: Int!
+  user: UserModel!
+  userId: String!
+}
+
+input UpdateProfileInput {
+  avatar: String
+  parentName: String
+  studentName: String
+  teacherName: String
+}
+
+type UserModel {
+  avatar: String
+  createdAt: DateTime!
+  email: String!
+  id: ID!
+  isActive: Boolean!
+  isVerified: Boolean!
+  lastLoginAt: DateTime
+  parentName: String
+  role: UserRole!
+  studentName: String
+  teacherName: String
+  updatedAt: DateTime!
+}
+
+"""User roles in the system"""
+enum UserRole {
+  STUDENT_PARENT
+  TEACHER
+}

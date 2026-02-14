@@ -1,0 +1,14 @@
+import { Query, Resolver } from '@nestjs/graphql';
+
+@Resolver()
+export class HealthResolver {
+  @Query(() => String, { description: 'Health check endpoint' })
+  health(): string {
+    return 'OK';
+  }
+
+  @Query(() => String, { description: 'API version' })
+  version(): string {
+    return '1.0.0';
+  }
+}

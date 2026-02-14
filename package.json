@@ -1,0 +1,32 @@
+{
+  "name": "lms-abk",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Learning Management System untuk Anak Berkebutuhan Khusus",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "db:generate": "pnpm --filter @lms/database prisma generate",
+    "db:push": "pnpm --filter @lms/database prisma db push",
+    "db:studio": "pnpm --filter @lms/database prisma studio",
+    "db:migrate": "pnpm --filter @lms/database prisma migrate dev"
+  },
+  "devDependencies": {
+    "@turbo/gen": "^1.11.3",
+    "turbo": "^1.11.3",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.1"
+}

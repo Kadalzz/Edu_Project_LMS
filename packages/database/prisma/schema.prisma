@@ -1,0 +1,657 @@
+// Prisma schema for LMS ABK
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER MANAGEMENT
+// ============================================
+
+enum UserRole {
+  TEACHER
+  STUDENT_PARENT
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String?
+  role          UserRole
+  
+  // For STUDENT_PARENT role
+  studentName   String?
+  parentName    String?
+  avatar        String?
+  
+  // For TEACHER role
+  teacherName   String?
+  
+  isActive      Boolean  @default(true)
+  isVerified    Boolean  @default(false)
+  lastLoginAt   DateTime?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  classroomsTeaching  ClassroomTeacher[]
+  classroomsEnrolled  ClassroomStudent[]
+  
+  // For parent with multiple children
+  children            Student[]    @relation("ParentChildren")
+  
+  // Student data (if STUDENT_PARENT role)
+  studentProfile      Student?     @relation("StudentUser")
+  
+  // Teacher data
+  lessonsCreated      Lesson[]
+  assignmentsCreated  Assignment[]
+  grading             Grading[]
+  notesWritten        Note[]
+  dailyReports        DailyReport[]
+  
+  // Media uploads
+  mediaUploaded       Media[]
+  
+  // Comments
+  dailyReportComments DailyReportComment[]
+  
+  // Notifications
+  notifications       Notification[]
+  
+  // Email verification
+  verificationToken   String?   @unique
+  verificationExpiry  DateTime?
+  
+  // Password reset
+  resetToken          String?   @unique
+  resetExpiry         DateTime?
+  
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model Student {
+  id              String   @id @default(cuid())
+  
+  // Link to User (student_parent account)
+  userId          String   @unique
+  user            User     @relation("StudentUser", fields: [userId], references: [id], onDelete: Cascade)
+  
+  // If parent has multiple children
+  parentId        String?
+  parent          User?    @relation("ParentChildren", fields: [parentId], references: [id])
+  
+  level           Int      @default(1)
+  totalXP         Int      @default(0)
+  currentXP       Int      @default(0) // XP dalam level saat ini
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  classrooms      ClassroomStudent[]
+  submissions     Submission[]
+  progress        Progress[]
+  notes           Note[]           @relation("StudentNotes")
+  dailyReports    DailyReport[]
+  
+  @@index([userId])
+  @@index([parentId])
+  @@index([level])
+  @@map("students")
+}
+
+// ============================================
+// CLASSROOM & ORGANIZATION
+// ============================================
+
+model Classroom {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  teachers    ClassroomTeacher[]
+  students    ClassroomStudent[]
+  subjects    Subject[]
+  
+  @@index([isActive])
+  @@map("classrooms")
+}
+
+model ClassroomTeacher {
+  id          String    @id @default(cuid())
+  classroomId String
+  teacherId   String
+  
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  teacher     User      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime  @default(now())
+  
+  @@unique([classroomId, teacherId])
+  @@index([classroomId])
+  @@index([teacherId])
+  @@map("classroom_teachers")
+}
+
+model ClassroomStudent {
+  id          String    @id @default(cuid())
+  classroomId String
+  studentId   String
+  userId      String
+  
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  student     Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  enrolledAt  DateTime  @default(now())
+  
+  @@unique([classroomId, studentId])
+  @@index([classroomId])
+  @@index([studentId])
+  @@map("classroom_students")
+}
+
+model Subject {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  icon        String?
+  color       String?
+  order       Int      @default(0)
+  
+  classroomId String
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  modules     Module[]
+  progress    Progress[]
+  
+  @@index([classroomId])
+  @@index([order])
+  @@map("subjects")
+}
+
+model Module {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  order       Int      @default(0)
+  
+  subjectId   String
+  subject     Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  lessons     Lesson[]
+  
+  @@index([subjectId])
+  @@index([order])
+  @@map("modules")
+}
+
+// ============================================
+// CONTENT & LESSONS
+// ============================================
+
+enum MediaType {
+  VIDEO
+  PDF
+  IMAGE
+  AUDIO
+}
+
+model Media {
+  id          String    @id @default(cuid())
+  filename    String
+  originalName String
+  mimeType    String
+  size        Int       // in bytes
+  type        MediaType
+  url         String
+  
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  lessons     LessonMedia[]
+  
+  @@index([uploadedById])
+  @@index([type])
+  @@map("media")
+}
+
+model Lesson {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  content     String?  // Text content
+  order       Int      @default(0)
+  
+  moduleId    String
+  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  
+  isDraft     Boolean  @default(true)
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  media       LessonMedia[]
+  assignments Assignment[]
+  progress    Progress[]
+  
+  @@index([moduleId])
+  @@index([createdById])
+  @@index([isDraft])
+  @@index([order])
+  @@map("lessons")
+}
+
+model LessonMedia {
+  id       String @id @default(cuid())
+  lessonId String
+  mediaId  String
+  order    Int    @default(0)
+  
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  media    Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  
+  @@unique([lessonId, mediaId])
+  @@index([lessonId])
+  @@index([mediaId])
+  @@map("lesson_media")
+}
+
+// ============================================
+// ASSIGNMENTS
+// ============================================
+
+enum AssignmentType {
+  QUIZ
+  TASK_ANALYSIS
+}
+
+model Assignment {
+  id          String         @id @default(cuid())
+  title       String
+  description String?
+  type        AssignmentType
+  
+  lessonId    String
+  lesson      Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  
+  createdById String
+  createdBy   User           @relation(fields: [createdById], references: [id])
+  
+  dueDate     DateTime?
+  xpReward    Int            @default(10) // Quiz: 10 XP, Task Analysis: 20 XP
+  
+  isDraft     Boolean        @default(true)
+  isActive    Boolean        @default(true)
+  
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  
+  // Relations
+  quizQuestions   QuizQuestion[]
+  taskSteps       TaskStep[]
+  submissions     Submission[]
+  
+  @@index([lessonId])
+  @@index([createdById])
+  @@index([type])
+  @@index([dueDate])
+  @@map("assignments")
+}
+
+// ============================================
+// QUIZ
+// ============================================
+
+model QuizQuestion {
+  id           String      @id @default(cuid())
+  question     String
+  questionImage String?    // URL to image (optional)
+  order        Int         @default(0)
+  
+  assignmentId String
+  assignment   Assignment  @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  
+  // Relations (4 options: A, B, C, D)
+  options      QuizOption[]
+  answers      QuizAnswer[]
+  
+  @@index([assignmentId])
+  @@index([order])
+  @@map("quiz_questions")
+}
+
+model QuizOption {
+  id         String       @id @default(cuid())
+  optionKey  String       // A, B, C, or D
+  text       String
+  image      String?      // URL to image (optional)
+  isCorrect  Boolean      @default(false)
+  
+  questionId String
+  question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  createdAt  DateTime     @default(now())
+  
+  @@unique([questionId, optionKey])
+  @@index([questionId])
+  @@map("quiz_options")
+}
+
+// ============================================
+// TASK ANALYSIS
+// ============================================
+
+model TaskStep {
+  id           String     @id @default(cuid())
+  stepNumber   Int
+  instruction  String
+  referenceImage String?  // Optional reference image URL
+  
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  
+  isMandatory  Boolean    @default(true)
+  
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  
+  // Relations
+  stepSubmissions StepSubmission[]
+  
+  @@unique([assignmentId, stepNumber])
+  @@index([assignmentId])
+  @@index([stepNumber])
+  @@map("task_steps")
+}
+
+// ============================================
+// SUBMISSIONS & GRADING
+// ============================================
+
+enum SubmissionStatus {
+  DRAFT
+  SUBMITTED
+  GRADED
+}
+
+model Submission {
+  id           String           @id @default(cuid())
+  
+  assignmentId String
+  assignment   Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  
+  studentId    String
+  student      Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  status       SubmissionStatus @default(DRAFT)
+  score        Float?           // 0-100
+  
+  submittedAt  DateTime?
+  gradedAt     DateTime?
+  
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  
+  // Relations
+  quizAnswers     QuizAnswer[]
+  stepSubmissions StepSubmission[]
+  grading         Grading?
+  
+  @@unique([assignmentId, studentId])
+  @@index([assignmentId])
+  @@index([studentId])
+  @@index([status])
+  @@map("submissions")
+}
+
+// Quiz answers
+model QuizAnswer {
+  id           String       @id @default(cuid())
+  
+  submissionId String
+  submission   Submission   @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  
+  questionId   String
+  question     QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  selectedOption String     // A, B, C, or D
+  isCorrect    Boolean     @default(false)
+  
+  answeredAt   DateTime    @default(now())
+  
+  @@unique([submissionId, questionId])
+  @@index([submissionId])
+  @@index([questionId])
+  @@map("quiz_answers")
+}
+
+// Task Analysis step submissions
+enum StepSubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model StepSubmission {
+  id           String               @id @default(cuid())
+  
+  submissionId String
+  submission   Submission           @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  
+  stepId       String
+  step         TaskStep             @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  
+  photoUrl     String               // Required: 1 photo per step
+  videoUrl     String?              // Required: 1 video per step
+  
+  status       StepSubmissionStatus @default(PENDING)
+  comment      String?              // Teacher feedback
+  
+  submittedAt  DateTime             @default(now())
+  reviewedAt   DateTime?
+  
+  @@unique([submissionId, stepId])
+  @@index([submissionId])
+  @@index([stepId])
+  @@index([status])
+  @@map("step_submissions")
+}
+
+// Teacher grading
+model Grading {
+  id           String     @id @default(cuid())
+  
+  submissionId String     @unique
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  
+  gradedById   String
+  gradedBy     User       @relation(fields: [gradedById], references: [id])
+  
+  score        Float      // 0-100
+  feedback     String?
+  
+  gradedAt     DateTime   @default(now())
+  
+  @@index([submissionId])
+  @@index([gradedById])
+  @@map("grading")
+}
+
+// ============================================
+// PROGRESS TRACKING & LEVELS
+// ============================================
+
+model Progress {
+  id            String   @id @default(cuid())
+  
+  studentId     String
+  student       Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  subjectId     String
+  subject       Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  
+  lessonId      String?
+  lesson        Lesson?  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  
+  completed     Boolean  @default(false)
+  completedAt   DateTime?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@unique([studentId, lessonId])
+  @@index([studentId])
+  @@index([subjectId])
+  @@index([completed])
+  @@map("progress")
+}
+
+// ============================================
+// COMMUNICATION
+// ============================================
+
+model Note {
+  id          String   @id @default(cuid())
+  content     String
+  
+  studentId   String
+  student     Student  @relation("StudentNotes", fields: [studentId], references: [id], onDelete: Cascade)
+  
+  writtenById String
+  writtenBy   User     @relation(fields: [writtenById], references: [id])
+  
+  // For threading (reply to note)
+  parentNoteId String?
+  parentNote   Note?   @relation("NoteReplies", fields: [parentNoteId], references: [id], onDelete: Cascade)
+  replies      Note[]  @relation("NoteReplies")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([studentId])
+  @@index([writtenById])
+  @@index([parentNoteId])
+  @@map("notes")
+}
+
+enum Mood {
+  VERY_SAD    // 😭
+  SAD         // 😟
+  NEUTRAL     // 😐
+  HAPPY       // 🙂
+  VERY_HAPPY  // 😄
+}
+
+model DailyReport {
+  id          String   @id @default(cuid())
+  date        DateTime @default(now()) @db.Date
+  
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  
+  mood        Mood
+  activities  String[] // Array of activity strings
+  achievements String?
+  challenges  String?
+  notes       String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Parent comments on report
+  comments    DailyReportComment[]
+  
+  @@unique([studentId, date])
+  @@index([studentId])
+  @@index([createdById])
+  @@index([date])
+  @@map("daily_reports")
+}
+
+model DailyReportComment {
+  id            String      @id @default(cuid())
+  content       String
+  
+  dailyReportId String
+  dailyReport   DailyReport @relation(fields: [dailyReportId], references: [id], onDelete: Cascade)
+  
+  commentedById String
+  commentedBy   User        @relation(fields: [commentedById], references: [id])
+  
+  createdAt     DateTime    @default(now())
+  
+  @@index([dailyReportId])
+  @@map("daily_report_comments")
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+enum NotificationType {
+  ASSIGNMENT_POSTED
+  ASSIGNMENT_GRADED
+  NOTE_RECEIVED
+  DAILY_REPORT_POSTED
+  LEVEL_UP
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  title     String
+  message   String
+  link      String?          // URL to relevant resource
+  
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  
+  createdAt DateTime         @default(now())
+  
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
