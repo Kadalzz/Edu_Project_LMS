@@ -27,6 +27,7 @@ import {
   UserPlus,
   UserMinus,
   GraduationCap,
+  ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -171,6 +172,11 @@ export default function ClassroomDetailPage() {
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
+                      <Link href={`/dashboard/classrooms/${classroomId}/subjects/${subject.id}`}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7">
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 ))}

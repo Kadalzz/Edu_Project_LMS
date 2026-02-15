@@ -8,6 +8,8 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ClassroomsModule } from './classrooms/classrooms.module';
 import { SubjectsModule } from './subjects/subjects.module';
+import { ModulesModule } from './modules/modules.module';
+import { LessonsModule } from './lessons/lessons.module';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { SubjectsModule } from './subjects/subjects.module';
     UsersModule,
     ClassroomsModule,
     SubjectsModule,
+    ModulesModule,
+    LessonsModule,
   ],
   providers: [HealthResolver],
 })

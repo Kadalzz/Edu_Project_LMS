@@ -50,6 +50,22 @@ input CreateClassroomInput {
   name: String!
 }
 
+input CreateLessonInput {
+  content: String
+  description: String
+  isDraft: Boolean = true
+  moduleId: String!
+  order: Int
+  title: String!
+}
+
+input CreateModuleInput {
+  description: String
+  name: String!
+  order: Int
+  subjectId: String!
+}
+
 input CreateStudentInput {
   classroomId: String!
   email: String!
@@ -88,12 +104,115 @@ type EnrollmentResultModel {
   success: Boolean!
 }
 
+type LessonDetailModel {
+  assignmentCount: Int!
+  content: String
+  createdAt: DateTime!
+  description: String
+  id: ID!
+  isActive: Boolean!
+  isDraft: Boolean!
+  media: [LessonMediaModel!]!
+  mediaCount: Int!
+  moduleId: String!
+  order: Int!
+  title: String!
+  updatedAt: DateTime!
+}
+
+type LessonMediaModel {
+  id: ID!
+  media: MediaModel!
+  order: Int!
+}
+
+type LessonModel {
+  assignmentCount: Int!
+  content: String
+  createdAt: DateTime!
+  description: String
+  id: ID!
+  isActive: Boolean!
+  isDraft: Boolean!
+  mediaCount: Int!
+  moduleId: String!
+  order: Int!
+  title: String!
+  updatedAt: DateTime!
+}
+
+type LessonResultModel {
+  message: String!
+  success: Boolean!
+}
+
+type LessonSummaryModel {
+  assignmentCount: Int!
+  createdAt: DateTime!
+  description: String
+  id: ID!
+  isActive: Boolean!
+  isDraft: Boolean!
+  mediaCount: Int!
+  order: Int!
+  title: String!
+}
+
 input LoginInput {
   email: String!
   password: String!
 }
 
+type MediaModel {
+  createdAt: DateTime!
+  filename: String!
+  id: ID!
+  mimeType: String!
+  originalName: String!
+  size: Int!
+  type: MediaType!
+  url: String!
+}
+
+"""Type of media file"""
+enum MediaType {
+  AUDIO
+  IMAGE
+  PDF
+  VIDEO
+}
+
 type MessageResponse {
+  message: String!
+  success: Boolean!
+}
+
+type ModuleDetailModel {
+  createdAt: DateTime!
+  description: String
+  id: ID!
+  isActive: Boolean!
+  lessonCount: Int!
+  lessons: [LessonSummaryModel!]!
+  name: String!
+  order: Int!
+  subjectId: String!
+  updatedAt: DateTime!
+}
+
+type ModuleModel {
+  createdAt: DateTime!
+  description: String
+  id: ID!
+  isActive: Boolean!
+  lessonCount: Int!
+  name: String!
+  order: Int!
+  subjectId: String!
+  updatedAt: DateTime!
+}
+
+type ModuleResultModel {
   message: String!
   success: Boolean!
 }
@@ -115,6 +234,12 @@ type Mutation {
   """Create a new classroom (Teacher only)"""
   createClassroom(input: CreateClassroomInput!): ClassroomListModel!
 
+  """Create a new lesson in module (Teacher only)"""
+  createLesson(input: CreateLessonInput!): LessonModel!
+
+  """Create a new module in subject (Teacher only)"""
+  createModule(input: CreateModuleInput!): ModuleModel!
+
   """Teacher creates a student account"""
   createStudent(input: CreateStudentInput!): UserModel!
 
@@ -123,6 +248,12 @@ type Mutation {
 
   """Delete classroom (Teacher only)"""
   deleteClassroom(classroomId: String!): EnrollmentResultModel!
+
+  """Delete lesson (Teacher only)"""
+  deleteLesson(lessonId: String!): LessonResultModel!
+
+  """Delete module (Teacher only)"""
+  deleteModule(moduleId: String!): ModuleResultModel!
 
   """Delete subject (Teacher only)"""
   deleteSubject(subjectId: String!): SubjectResultModel!
@@ -136,6 +267,9 @@ type Mutation {
   """Refresh access token"""
   refreshToken(input: RefreshTokenInput!): RefreshTokenResponse!
 
+  """Toggle lesson draft/published (Teacher only)"""
+  toggleLessonDraft(lessonId: String!): LessonModel!
+
   """Toggle student active status"""
   toggleStudentActive(studentUserId: String!): UserModel!
 
@@ -144,6 +278,12 @@ type Mutation {
 
   """Update classroom (Teacher only)"""
   updateClassroom(input: UpdateClassroomInput!): ClassroomListModel!
+
+  """Update lesson (Teacher only)"""
+  updateLesson(input: UpdateLessonInput!): LessonModel!
+
+  """Update module (Teacher only)"""
+  updateModule(input: UpdateModuleInput!): ModuleModel!
 
   """Update own profile"""
   updateProfile(input: UpdateProfileInput!): UserModel!
@@ -165,8 +305,20 @@ type Query {
   """Health check endpoint"""
   health: String!
 
+  """Get lesson detail with media"""
+  lessonDetail(lessonId: String!): LessonDetailModel!
+
+  """Get lessons for a module"""
+  lessons(moduleId: String!): [LessonModel!]!
+
   """Get current logged-in user"""
   me: UserModel!
+
+  """Get module detail with lessons"""
+  moduleDetail(moduleId: String!): ModuleDetailModel!
+
+  """Get modules for a subject"""
+  modules(subjectId: String!): [ModuleModel!]!
 
   """Get classrooms for current teacher"""
   myClassrooms: [ClassroomModel!]!
@@ -269,6 +421,24 @@ input UpdateClassroomInput {
   id: String!
   isActive: Boolean
   name: String
+}
+
+input UpdateLessonInput {
+  content: String
+  description: String
+  id: String!
+  isActive: Boolean
+  isDraft: Boolean
+  order: Int
+  title: String
+}
+
+input UpdateModuleInput {
+  description: String
+  id: String!
+  isActive: Boolean
+  name: String
+  order: Int
 }
 
 input UpdateProfileInput {

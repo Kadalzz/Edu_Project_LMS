@@ -401,3 +401,204 @@ export const SUBJECT_QUERIES = {
     }
   `,
 };
+
+// ============================================
+// MODULE Queries & Mutations
+// ============================================
+
+export const MODULE_MUTATIONS = {
+  CREATE: `
+    mutation CreateModule($input: CreateModuleInput!) {
+      createModule(input: $input) {
+        id
+        name
+        description
+        order
+        subjectId
+        isActive
+        lessonCount
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  UPDATE: `
+    mutation UpdateModule($input: UpdateModuleInput!) {
+      updateModule(input: $input) {
+        id
+        name
+        description
+        order
+        subjectId
+        isActive
+        lessonCount
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  DELETE: `
+    mutation DeleteModule($moduleId: String!) {
+      deleteModule(moduleId: $moduleId) {
+        success
+        message
+      }
+    }
+  `,
+};
+
+export const MODULE_QUERIES = {
+  BY_SUBJECT: `
+    query Modules($subjectId: String!) {
+      modules(subjectId: $subjectId) {
+        id
+        name
+        description
+        order
+        subjectId
+        isActive
+        lessonCount
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  DETAIL: `
+    query ModuleDetail($moduleId: String!) {
+      moduleDetail(moduleId: $moduleId) {
+        id
+        name
+        description
+        order
+        subjectId
+        isActive
+        lessonCount
+        lessons {
+          id
+          title
+          description
+          order
+          isDraft
+          isActive
+          mediaCount
+          assignmentCount
+          createdAt
+        }
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+};
+
+// ============================================
+// LESSON Queries & Mutations
+// ============================================
+
+export const LESSON_MUTATIONS = {
+  CREATE: `
+    mutation CreateLesson($input: CreateLessonInput!) {
+      createLesson(input: $input) {
+        id
+        title
+        description
+        content
+        order
+        moduleId
+        isDraft
+        isActive
+        mediaCount
+        assignmentCount
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  UPDATE: `
+    mutation UpdateLesson($input: UpdateLessonInput!) {
+      updateLesson(input: $input) {
+        id
+        title
+        description
+        content
+        order
+        moduleId
+        isDraft
+        isActive
+        mediaCount
+        assignmentCount
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  DELETE: `
+    mutation DeleteLesson($lessonId: String!) {
+      deleteLesson(lessonId: $lessonId) {
+        success
+        message
+      }
+    }
+  `,
+  TOGGLE_DRAFT: `
+    mutation ToggleLessonDraft($lessonId: String!) {
+      toggleLessonDraft(lessonId: $lessonId) {
+        id
+        title
+        isDraft
+        isActive
+      }
+    }
+  `,
+};
+
+export const LESSON_QUERIES = {
+  BY_MODULE: `
+    query Lessons($moduleId: String!) {
+      lessons(moduleId: $moduleId) {
+        id
+        title
+        description
+        order
+        isDraft
+        isActive
+        mediaCount
+        assignmentCount
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  DETAIL: `
+    query LessonDetail($lessonId: String!) {
+      lessonDetail(lessonId: $lessonId) {
+        id
+        title
+        description
+        content
+        order
+        moduleId
+        isDraft
+        isActive
+        mediaCount
+        assignmentCount
+        media {
+          id
+          order
+          media {
+            id
+            filename
+            originalName
+            mimeType
+            size
+            type
+            url
+            createdAt
+          }
+        }
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+};
