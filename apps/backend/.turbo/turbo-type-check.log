@@ -1,0 +1,4 @@
+
+> @lms/backend@1.0.0 type-check C:\git\EDU_PROJECT_LMS\apps\backend
+> tsc --noEmit
+

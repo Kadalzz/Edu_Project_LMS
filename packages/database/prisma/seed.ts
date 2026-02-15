@@ -81,6 +81,7 @@ async function main() {
       data: {
         classroomId: classroom.id,
         studentId: student.id,
+        userId: user.id,
       },
     });
 

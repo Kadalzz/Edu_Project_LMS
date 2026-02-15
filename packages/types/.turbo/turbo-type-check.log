@@ -1,0 +1,4 @@
+
+> @lms/types@1.0.0 type-check C:\git\EDU_PROJECT_LMS\packages\types
+> tsc --noEmit
+

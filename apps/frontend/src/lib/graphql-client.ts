@@ -171,3 +171,233 @@ export const USER_QUERIES = {
     }
   `,
 };
+
+// ============================================
+// CLASSROOM Queries & Mutations
+// ============================================
+
+export const CLASSROOM_MUTATIONS = {
+  CREATE: `
+    mutation CreateClassroom($input: CreateClassroomInput!) {
+      createClassroom(input: $input) {
+        id
+        name
+        description
+        isActive
+        studentCount
+        subjectCount
+        createdAt
+      }
+    }
+  `,
+  UPDATE: `
+    mutation UpdateClassroom($input: UpdateClassroomInput!) {
+      updateClassroom(input: $input) {
+        id
+        name
+        description
+        isActive
+        studentCount
+        subjectCount
+        createdAt
+      }
+    }
+  `,
+  DELETE: `
+    mutation DeleteClassroom($classroomId: String!) {
+      deleteClassroom(classroomId: $classroomId) {
+        success
+        message
+      }
+    }
+  `,
+  ENROLL_STUDENT: `
+    mutation EnrollStudent($input: EnrollStudentInput!) {
+      enrollStudent(input: $input) {
+        success
+        message
+      }
+    }
+  `,
+  UNENROLL_STUDENT: `
+    mutation UnenrollStudent($input: UnenrollStudentInput!) {
+      unenrollStudent(input: $input) {
+        success
+        message
+      }
+    }
+  `,
+};
+
+export const CLASSROOM_QUERIES = {
+  LIST: `
+    query Classrooms {
+      classrooms {
+        id
+        name
+        description
+        isActive
+        studentCount
+        subjectCount
+        createdAt
+      }
+    }
+  `,
+  DETAIL: `
+    query ClassroomDetail($classroomId: String!) {
+      classroomDetail(classroomId: $classroomId) {
+        id
+        name
+        description
+        isActive
+        studentCount
+        subjectCount
+        students {
+          id
+          enrolledAt
+          student {
+            id
+            userId
+            level
+            totalXP
+            currentXP
+            user {
+              id
+              email
+              studentName
+              parentName
+              avatar
+              isActive
+            }
+          }
+        }
+        subjects {
+          id
+          name
+          description
+          icon
+          color
+          order
+          isActive
+          moduleCount
+        }
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  AVAILABLE_STUDENTS: `
+    query AvailableStudents($classroomId: String!) {
+      availableStudents(classroomId: $classroomId) {
+        id
+        userId
+        level
+        totalXP
+        currentXP
+        user {
+          id
+          email
+          studentName
+          parentName
+          avatar
+          isActive
+        }
+      }
+    }
+  `,
+};
+
+// ============================================
+// SUBJECT Queries & Mutations
+// ============================================
+
+export const SUBJECT_MUTATIONS = {
+  CREATE: `
+    mutation CreateSubject($input: CreateSubjectInput!) {
+      createSubject(input: $input) {
+        id
+        name
+        description
+        icon
+        color
+        order
+        classroomId
+        isActive
+        moduleCount
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  UPDATE: `
+    mutation UpdateSubject($input: UpdateSubjectInput!) {
+      updateSubject(input: $input) {
+        id
+        name
+        description
+        icon
+        color
+        order
+        classroomId
+        isActive
+        moduleCount
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  DELETE: `
+    mutation DeleteSubject($subjectId: String!) {
+      deleteSubject(subjectId: $subjectId) {
+        success
+        message
+      }
+    }
+  `,
+};
+
+export const SUBJECT_QUERIES = {
+  BY_CLASSROOM: `
+    query Subjects($classroomId: String!) {
+      subjects(classroomId: $classroomId) {
+        id
+        name
+        description
+        icon
+        color
+        order
+        classroomId
+        isActive
+        moduleCount
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  DETAIL: `
+    query SubjectDetail($subjectId: String!) {
+      subjectDetail(subjectId: $subjectId) {
+        id
+        name
+        description
+        icon
+        color
+        order
+        classroomId
+        isActive
+        moduleCount
+        modules {
+          id
+          name
+          description
+          order
+          isActive
+          lessonCount
+          createdAt
+        }
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+};
