@@ -21,6 +21,8 @@ import {
   EyeOff,
   Image,
   FileText,
+  ClipboardList,
+  ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -229,6 +231,34 @@ export default function LessonEditorPage() {
             <p className="text-xs text-muted-foreground mt-2">
               {content.length} karakter
             </p>
+          </CardContent>
+        </Card>
+
+        {/* Assignments Section */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ClipboardList className="h-4 w-4" />
+              Tugas & Penilaian
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Link href={`/dashboard/classrooms/${classroomId}/subjects/${subjectId}/modules/${moduleId}/lessons/${lessonId}/assignments`}>
+              <div className="flex items-center justify-between p-4 rounded-lg border hover:bg-gray-50 cursor-pointer transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <ClipboardList className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Kelola Tugas</p>
+                    <p className="text-xs text-muted-foreground">
+                      {lesson.assignmentCount || 0} tugas (quiz & task analysis)
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-gray-400" />
+              </div>
+            </Link>
           </CardContent>
         </Card>
 

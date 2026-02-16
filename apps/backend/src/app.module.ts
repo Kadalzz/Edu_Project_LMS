@@ -10,6 +10,7 @@ import { ClassroomsModule } from './classrooms/classrooms.module';
 import { SubjectsModule } from './subjects/subjects.module';
 import { ModulesModule } from './modules/modules.module';
 import { LessonsModule } from './lessons/lessons.module';
+import { AssignmentsModule } from './assignments/assignments.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { LessonsModule } from './lessons/lessons.module';
     SubjectsModule,
     ModulesModule,
     LessonsModule,
+    AssignmentsModule,
   ],
   providers: [HealthResolver],
 })

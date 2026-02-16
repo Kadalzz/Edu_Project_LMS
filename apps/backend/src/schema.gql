@@ -2,6 +2,75 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input AddQuizQuestionInput {
+  assignmentId: String!
+  options: [QuizOptionInput!]!
+  order: Int
+  question: String!
+  questionImage: String
+}
+
+input AddTaskStepInput {
+  assignmentId: String!
+  instruction: String!
+  isMandatory: Boolean = true
+  referenceImage: String
+  stepNumber: Int!
+}
+
+type AssignmentDetailModel {
+  createdAt: DateTime!
+  description: String
+  dueDate: DateTime
+  id: ID!
+  isActive: Boolean!
+  isDraft: Boolean!
+  lessonId: String!
+  questionCount: Int!
+  quizQuestions: [QuizQuestionModel!]
+  submissionCount: Int!
+  taskSteps: [TaskStepModel!]
+  title: String!
+  type: AssignmentType!
+  updatedAt: DateTime!
+  xpReward: Int!
+}
+
+type AssignmentModel {
+  createdAt: DateTime!
+  description: String
+  dueDate: DateTime
+  id: ID!
+  isActive: Boolean!
+  isDraft: Boolean!
+  lessonId: String!
+  questionCount: Int!
+  submissionCount: Int!
+  title: String!
+  type: AssignmentType!
+  updatedAt: DateTime!
+  xpReward: Int!
+}
+
+type AssignmentStudentModel {
+  description: String
+  dueDate: DateTime
+  id: ID!
+  lessonId: String!
+  questionCount: Int!
+  quizQuestions: [QuizQuestionStudentModel!]
+  taskSteps: [TaskStepModel!]
+  title: String!
+  type: AssignmentType!
+  xpReward: Int!
+}
+
+"""Type of assignment"""
+enum AssignmentType {
+  QUIZ
+  TASK_ANALYSIS
+}
+
 type AuthResponse {
   accessToken: String!
   refreshToken: String!
@@ -43,6 +112,16 @@ type ClassroomModel {
   name: String!
   studentCount: Int
   subjectCount: Int
+}
+
+input CreateAssignmentInput {
+  description: String
+  dueDate: String
+  isDraft: Boolean = true
+  lessonId: String!
+  title: String!
+  type: String!
+  xpReward: Int = 10
 }
 
 input CreateClassroomInput {
@@ -102,6 +181,21 @@ type EnrolledStudentModel {
 type EnrollmentResultModel {
   message: String!
   success: Boolean!
+}
+
+input GradeSubmissionInput {
+  feedback: String
+  score: Int!
+  submissionId: String!
+}
+
+type GradingModel {
+  feedback: String
+  gradedAt: DateTime!
+  gradedById: String!
+  id: ID!
+  score: Float!
+  submissionId: String!
 }
 
 type LessonDetailModel {
@@ -228,8 +322,23 @@ type ModuleSummaryModel {
 }
 
 type Mutation {
+  """Add quiz question (Teacher)"""
+  addQuizQuestion(input: AddQuizQuestionInput!): QuizQuestionModel!
+
+  """Add task step (Teacher)"""
+  addTaskStep(input: AddTaskStepInput!): TaskStepModel!
+
   """Change password"""
   changePassword(input: ChangePasswordInput!): MessageResponse!
+
+  """Complete quiz submission & auto-grade (Student)"""
+  completeQuizSubmission(submissionId: String!): QuizResultModel!
+
+  """Complete task submission (Student)"""
+  completeTaskSubmission(submissionId: String!): SubmissionModel!
+
+  """Create assignment (Teacher)"""
+  createAssignment(input: CreateAssignmentInput!): AssignmentModel!
 
   """Create a new classroom (Teacher only)"""
   createClassroom(input: CreateClassroomInput!): ClassroomListModel!
@@ -246,6 +355,9 @@ type Mutation {
   """Create a new subject in classroom (Teacher only)"""
   createSubject(input: CreateSubjectInput!): SubjectModel!
 
+  """Delete assignment (Teacher)"""
+  deleteAssignment(assignmentId: String!): ResultModel!
+
   """Delete classroom (Teacher only)"""
   deleteClassroom(classroomId: String!): EnrollmentResultModel!
 
@@ -255,17 +367,41 @@ type Mutation {
   """Delete module (Teacher only)"""
   deleteModule(moduleId: String!): ModuleResultModel!
 
+  """Delete quiz question (Teacher)"""
+  deleteQuizQuestion(questionId: String!): ResultModel!
+
   """Delete subject (Teacher only)"""
   deleteSubject(subjectId: String!): SubjectResultModel!
 
+  """Delete task step (Teacher)"""
+  deleteTaskStep(stepId: String!): ResultModel!
+
   """Enroll student in classroom (Teacher only)"""
   enrollStudent(input: EnrollStudentInput!): EnrollmentResultModel!
+
+  """Grade a submission (Teacher)"""
+  gradeSubmission(input: GradeSubmissionInput!): GradingModel!
 
   """Login with email and password"""
   login(input: LoginInput!): AuthResponse!
 
   """Refresh access token"""
   refreshToken(input: RefreshTokenInput!): RefreshTokenResponse!
+
+  """Review task step (Teacher)"""
+  reviewTaskStep(input: ReviewTaskStepInput!): StepSubmissionModel!
+
+  """Start a submission (Student)"""
+  startSubmission(assignmentId: String!): SubmissionModel!
+
+  """Submit quiz answer (Student)"""
+  submitQuizAnswer(input: SubmitQuizAnswerInput!): QuizAnswerModel!
+
+  """Submit task step evidence (Student)"""
+  submitTaskStep(input: SubmitTaskStepInput!): StepSubmissionModel!
+
+  """Toggle assignment draft (Teacher)"""
+  toggleAssignmentDraft(assignmentId: String!): AssignmentModel!
 
   """Toggle lesson draft/published (Teacher only)"""
   toggleLessonDraft(lessonId: String!): LessonModel!
@@ -275,6 +411,9 @@ type Mutation {
 
   """Remove student from classroom (Teacher only)"""
   unenrollStudent(input: UnenrollStudentInput!): EnrollmentResultModel!
+
+  """Update assignment (Teacher)"""
+  updateAssignment(input: UpdateAssignmentInput!): AssignmentModel!
 
   """Update classroom (Teacher only)"""
   updateClassroom(input: UpdateClassroomInput!): ClassroomListModel!
@@ -288,11 +427,26 @@ type Mutation {
   """Update own profile"""
   updateProfile(input: UpdateProfileInput!): UserModel!
 
+  """Update quiz question (Teacher)"""
+  updateQuizQuestion(input: UpdateQuizQuestionInput!): QuizQuestionModel!
+
   """Update subject (Teacher only)"""
   updateSubject(input: UpdateSubjectInput!): SubjectModel!
+
+  """Update task step (Teacher)"""
+  updateTaskStep(input: UpdateTaskStepInput!): TaskStepModel!
 }
 
 type Query {
+  """Get assignment detail (Teacher)"""
+  assignmentDetail(assignmentId: String!): AssignmentDetailModel!
+
+  """Get assignment for student (no answers)"""
+  assignmentForStudent(assignmentId: String!): AssignmentStudentModel!
+
+  """Get assignments for a lesson"""
+  assignments(lessonId: String!): [AssignmentModel!]!
+
   """Get students not yet enrolled in a classroom"""
   availableStudents(classroomId: String!): [StudentModel!]!
 
@@ -326,14 +480,81 @@ type Query {
   """Get all students for current teacher"""
   myStudents: [StudentWithUser!]!
 
+  """Get my submission for an assignment"""
+  mySubmission(assignmentId: String!): SubmissionDetailModel
+
   """Get subject detail with modules"""
   subjectDetail(subjectId: String!): SubjectDetailModel!
 
   """Get subjects for a classroom"""
   subjects(classroomId: String!): [SubjectModel!]!
 
+  """Get submission detail"""
+  submissionDetail(submissionId: String!): SubmissionDetailModel!
+
+  """Get all submissions for an assignment (Teacher)"""
+  submissions(assignmentId: String!): [SubmissionModel!]!
+
   """API version"""
   version: String!
+}
+
+type QuizAnswerModel {
+  answeredAt: DateTime!
+  id: ID!
+  isCorrect: Boolean!
+  questionId: String!
+  selectedOption: String!
+  submissionId: String!
+}
+
+input QuizOptionInput {
+  image: String
+  isCorrect: Boolean!
+  optionKey: String!
+  text: String!
+}
+
+type QuizOptionModel {
+  id: ID!
+  image: String
+  isCorrect: Boolean!
+  optionKey: String!
+  text: String!
+}
+
+type QuizOptionStudentModel {
+  id: ID!
+  image: String
+  optionKey: String!
+  text: String!
+}
+
+type QuizQuestionModel {
+  assignmentId: String!
+  createdAt: DateTime!
+  id: ID!
+  options: [QuizOptionModel!]!
+  order: Int!
+  question: String!
+  questionImage: String
+  updatedAt: DateTime!
+}
+
+type QuizQuestionStudentModel {
+  id: ID!
+  options: [QuizOptionStudentModel!]!
+  order: Int!
+  question: String!
+  questionImage: String
+}
+
+type QuizResultModel {
+  correctCount: Int!
+  score: Float!
+  submissionId: String!
+  totalQuestions: Int!
+  xpEarned: Int!
 }
 
 input RefreshTokenInput {
@@ -343,6 +564,45 @@ input RefreshTokenInput {
 type RefreshTokenResponse {
   accessToken: String!
   refreshToken: String!
+}
+
+type ResultModel {
+  message: String!
+  success: Boolean!
+}
+
+input ReviewTaskStepInput {
+  comment: String
+  status: String!
+  stepSubmissionId: String!
+}
+
+type StepSubmissionModel {
+  comment: String
+  id: ID!
+  photoUrl: String!
+  reviewedAt: DateTime
+  status: StepSubmissionStatus!
+  step: TaskStepModel
+  stepId: String!
+  submissionId: String!
+  submittedAt: DateTime!
+  videoUrl: String
+}
+
+"""Status of task step submission"""
+enum StepSubmissionStatus {
+  APPROVED
+  PENDING
+  REJECTED
+}
+
+type StudentInfoModel {
+  id: ID!
+  level: Int!
+  studentName: String
+  totalXP: Int!
+  userId: String!
 }
 
 type StudentModel {
@@ -411,9 +671,80 @@ type SubjectSummaryModel {
   order: Int!
 }
 
+type SubmissionDetailModel {
+  assignment: AssignmentModel
+  assignmentId: String!
+  createdAt: DateTime!
+  gradedAt: DateTime
+  grading: GradingModel
+  id: ID!
+  quizAnswers: [QuizAnswerModel!]
+  score: Float
+  status: SubmissionStatus!
+  stepSubmissions: [StepSubmissionModel!]
+  student: StudentInfoModel
+  studentId: String!
+  submittedAt: DateTime
+  updatedAt: DateTime!
+}
+
+type SubmissionModel {
+  assignmentId: String!
+  createdAt: DateTime!
+  gradedAt: DateTime
+  id: ID!
+  score: Float
+  status: SubmissionStatus!
+  student: StudentInfoModel
+  studentId: String!
+  submittedAt: DateTime
+  updatedAt: DateTime!
+}
+
+"""Status of submission"""
+enum SubmissionStatus {
+  DRAFT
+  GRADED
+  SUBMITTED
+}
+
+input SubmitQuizAnswerInput {
+  questionId: String!
+  selectedOption: String!
+  submissionId: String!
+}
+
+input SubmitTaskStepInput {
+  photoUrl: String!
+  stepId: String!
+  submissionId: String!
+  videoUrl: String
+}
+
+type TaskStepModel {
+  assignmentId: String!
+  createdAt: DateTime!
+  id: ID!
+  instruction: String!
+  isMandatory: Boolean!
+  referenceImage: String
+  stepNumber: Int!
+  updatedAt: DateTime!
+}
+
 input UnenrollStudentInput {
   classroomId: String!
   studentUserId: String!
+}
+
+input UpdateAssignmentInput {
+  description: String
+  dueDate: String
+  id: String!
+  isActive: Boolean
+  isDraft: Boolean
+  title: String
+  xpReward: Int
 }
 
 input UpdateClassroomInput {
@@ -448,6 +779,14 @@ input UpdateProfileInput {
   teacherName: String
 }
 
+input UpdateQuizQuestionInput {
+  id: String!
+  options: [QuizOptionInput!]
+  order: Int
+  question: String
+  questionImage: String
+}
+
 input UpdateSubjectInput {
   color: String
   description: String
@@ -456,6 +795,14 @@ input UpdateSubjectInput {
   isActive: Boolean
   name: String
   order: Int
+}
+
+input UpdateTaskStepInput {
+  id: String!
+  instruction: String
+  isMandatory: Boolean
+  referenceImage: String
+  stepNumber: Int
 }
 
 type UserModel {

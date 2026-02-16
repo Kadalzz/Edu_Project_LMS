@@ -602,3 +602,460 @@ export const LESSON_QUERIES = {
     }
   `,
 };
+
+// ============================================
+// ASSIGNMENT Queries & Mutations
+// ============================================
+
+export const ASSIGNMENT_MUTATIONS = {
+  CREATE: `
+    mutation CreateAssignment($input: CreateAssignmentInput!) {
+      createAssignment(input: $input) {
+        id
+        title
+        description
+        type
+        lessonId
+        dueDate
+        xpReward
+        isDraft
+        isActive
+        questionCount
+        submissionCount
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  UPDATE: `
+    mutation UpdateAssignment($input: UpdateAssignmentInput!) {
+      updateAssignment(input: $input) {
+        id
+        title
+        description
+        type
+        lessonId
+        dueDate
+        xpReward
+        isDraft
+        isActive
+        questionCount
+        submissionCount
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  DELETE: `
+    mutation DeleteAssignment($assignmentId: String!) {
+      deleteAssignment(assignmentId: $assignmentId) {
+        success
+        message
+      }
+    }
+  `,
+  TOGGLE_DRAFT: `
+    mutation ToggleAssignmentDraft($assignmentId: String!) {
+      toggleAssignmentDraft(assignmentId: $assignmentId) {
+        id
+        title
+        isDraft
+        isActive
+      }
+    }
+  `,
+  ADD_QUIZ_QUESTION: `
+    mutation AddQuizQuestion($input: AddQuizQuestionInput!) {
+      addQuizQuestion(input: $input) {
+        id
+        question
+        questionImage
+        order
+        assignmentId
+        options {
+          id
+          optionKey
+          text
+          image
+          isCorrect
+        }
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  UPDATE_QUIZ_QUESTION: `
+    mutation UpdateQuizQuestion($input: UpdateQuizQuestionInput!) {
+      updateQuizQuestion(input: $input) {
+        id
+        question
+        questionImage
+        order
+        options {
+          id
+          optionKey
+          text
+          image
+          isCorrect
+        }
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  DELETE_QUIZ_QUESTION: `
+    mutation DeleteQuizQuestion($questionId: String!) {
+      deleteQuizQuestion(questionId: $questionId) {
+        success
+        message
+      }
+    }
+  `,
+  ADD_TASK_STEP: `
+    mutation AddTaskStep($input: AddTaskStepInput!) {
+      addTaskStep(input: $input) {
+        id
+        stepNumber
+        instruction
+        referenceImage
+        isMandatory
+        assignmentId
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  UPDATE_TASK_STEP: `
+    mutation UpdateTaskStep($input: UpdateTaskStepInput!) {
+      updateTaskStep(input: $input) {
+        id
+        stepNumber
+        instruction
+        referenceImage
+        isMandatory
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  DELETE_TASK_STEP: `
+    mutation DeleteTaskStep($stepId: String!) {
+      deleteTaskStep(stepId: $stepId) {
+        success
+        message
+      }
+    }
+  `,
+  START_SUBMISSION: `
+    mutation StartSubmission($assignmentId: String!) {
+      startSubmission(assignmentId: $assignmentId) {
+        id
+        assignmentId
+        studentId
+        status
+        createdAt
+      }
+    }
+  `,
+  SUBMIT_QUIZ_ANSWER: `
+    mutation SubmitQuizAnswer($input: SubmitQuizAnswerInput!) {
+      submitQuizAnswer(input: $input) {
+        id
+        submissionId
+        questionId
+        selectedOption
+        isCorrect
+        answeredAt
+      }
+    }
+  `,
+  COMPLETE_QUIZ: `
+    mutation CompleteQuizSubmission($submissionId: String!) {
+      completeQuizSubmission(submissionId: $submissionId) {
+        score
+        correctCount
+        totalQuestions
+        xpEarned
+        submissionId
+      }
+    }
+  `,
+  SUBMIT_TASK_STEP: `
+    mutation SubmitTaskStep($input: SubmitTaskStepInput!) {
+      submitTaskStep(input: $input) {
+        id
+        submissionId
+        stepId
+        photoUrl
+        videoUrl
+        status
+        submittedAt
+        step {
+          id
+          stepNumber
+          instruction
+        }
+      }
+    }
+  `,
+  COMPLETE_TASK: `
+    mutation CompleteTaskSubmission($submissionId: String!) {
+      completeTaskSubmission(submissionId: $submissionId) {
+        id
+        status
+        submittedAt
+      }
+    }
+  `,
+  GRADE_SUBMISSION: `
+    mutation GradeSubmission($input: GradeSubmissionInput!) {
+      gradeSubmission(input: $input) {
+        id
+        submissionId
+        score
+        feedback
+        gradedAt
+      }
+    }
+  `,
+  REVIEW_TASK_STEP: `
+    mutation ReviewTaskStep($input: ReviewTaskStepInput!) {
+      reviewTaskStep(input: $input) {
+        id
+        status
+        comment
+        reviewedAt
+        step {
+          id
+          stepNumber
+          instruction
+        }
+      }
+    }
+  `,
+};
+
+export const ASSIGNMENT_QUERIES = {
+  BY_LESSON: `
+    query Assignments($lessonId: String!) {
+      assignments(lessonId: $lessonId) {
+        id
+        title
+        description
+        type
+        lessonId
+        dueDate
+        xpReward
+        isDraft
+        isActive
+        questionCount
+        submissionCount
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  DETAIL: `
+    query AssignmentDetail($assignmentId: String!) {
+      assignmentDetail(assignmentId: $assignmentId) {
+        id
+        title
+        description
+        type
+        lessonId
+        dueDate
+        xpReward
+        isDraft
+        isActive
+        questionCount
+        submissionCount
+        quizQuestions {
+          id
+          question
+          questionImage
+          order
+          assignmentId
+          options {
+            id
+            optionKey
+            text
+            image
+            isCorrect
+          }
+          createdAt
+          updatedAt
+        }
+        taskSteps {
+          id
+          stepNumber
+          instruction
+          referenceImage
+          isMandatory
+          assignmentId
+          createdAt
+          updatedAt
+        }
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  FOR_STUDENT: `
+    query AssignmentForStudent($assignmentId: String!) {
+      assignmentForStudent(assignmentId: $assignmentId) {
+        id
+        title
+        description
+        type
+        lessonId
+        dueDate
+        xpReward
+        questionCount
+        quizQuestions {
+          id
+          question
+          questionImage
+          order
+          options {
+            id
+            optionKey
+            text
+            image
+          }
+        }
+        taskSteps {
+          id
+          stepNumber
+          instruction
+          referenceImage
+          isMandatory
+          assignmentId
+          createdAt
+          updatedAt
+        }
+      }
+    }
+  `,
+  MY_SUBMISSION: `
+    query MySubmission($assignmentId: String!) {
+      mySubmission(assignmentId: $assignmentId) {
+        id
+        assignmentId
+        studentId
+        status
+        score
+        submittedAt
+        gradedAt
+        quizAnswers {
+          id
+          questionId
+          selectedOption
+          isCorrect
+          answeredAt
+        }
+        stepSubmissions {
+          id
+          stepId
+          photoUrl
+          videoUrl
+          status
+          comment
+          submittedAt
+          reviewedAt
+          step {
+            id
+            stepNumber
+            instruction
+          }
+        }
+        grading {
+          id
+          score
+          feedback
+          gradedAt
+        }
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  SUBMISSIONS: `
+    query Submissions($assignmentId: String!) {
+      submissions(assignmentId: $assignmentId) {
+        id
+        assignmentId
+        studentId
+        status
+        score
+        submittedAt
+        gradedAt
+        createdAt
+        student {
+          id
+          userId
+          level
+          totalXP
+          studentName
+        }
+      }
+    }
+  `,
+  SUBMISSION_DETAIL: `
+    query SubmissionDetail($submissionId: String!) {
+      submissionDetail(submissionId: $submissionId) {
+        id
+        assignmentId
+        studentId
+        status
+        score
+        submittedAt
+        gradedAt
+        quizAnswers {
+          id
+          questionId
+          selectedOption
+          isCorrect
+          answeredAt
+        }
+        stepSubmissions {
+          id
+          stepId
+          photoUrl
+          videoUrl
+          status
+          comment
+          submittedAt
+          reviewedAt
+          step {
+            id
+            stepNumber
+            instruction
+          }
+        }
+        grading {
+          id
+          score
+          feedback
+          gradedAt
+        }
+        student {
+          id
+          userId
+          level
+          totalXP
+          studentName
+        }
+        assignment {
+          id
+          title
+          type
+          xpReward
+          questionCount
+          submissionCount
+        }
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+};
