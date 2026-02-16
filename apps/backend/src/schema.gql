@@ -2,6 +2,11 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input AddCommentInput {
+  content: String!
+  reportId: String!
+}
+
 input AddQuizQuestionInput {
   assignmentId: String!
   options: [QuizOptionInput!]!
@@ -129,6 +134,16 @@ input CreateClassroomInput {
   name: String!
 }
 
+input CreateDailyReportInput {
+  achievements: String
+  activities: [String!]!
+  challenges: String
+  date: String!
+  mood: Mood!
+  notes: String
+  studentId: String!
+}
+
 input CreateLessonInput {
   content: String
   description: String
@@ -143,6 +158,12 @@ input CreateModuleInput {
   name: String!
   order: Int
   subjectId: String!
+}
+
+input CreateNoteInput {
+  content: String!
+  parentNoteId: String
+  studentId: String!
 }
 
 input CreateStudentInput {
@@ -160,6 +181,37 @@ input CreateSubjectInput {
   icon: String
   name: String!
   order: Int
+}
+
+type DailyReportAuthorModel {
+  id: ID!
+  name: String!
+  role: String!
+}
+
+type DailyReportCommentModel {
+  commentedBy: DailyReportAuthorModel!
+  commentedById: String!
+  content: String!
+  createdAt: DateTime!
+  dailyReportId: String!
+  id: ID!
+}
+
+type DailyReportModel {
+  achievements: String
+  activities: [String!]!
+  challenges: String
+  comments: [DailyReportCommentModel!]!
+  createdAt: DateTime!
+  createdBy: DailyReportAuthorModel!
+  createdById: String!
+  date: DateTime!
+  id: ID!
+  mood: Mood!
+  notes: String
+  studentId: String!
+  updatedAt: DateTime!
 }
 
 """
@@ -321,7 +373,19 @@ type ModuleSummaryModel {
   order: Int!
 }
 
+"""Mood of the student"""
+enum Mood {
+  HAPPY
+  NEUTRAL
+  SAD
+  VERY_HAPPY
+  VERY_SAD
+}
+
 type Mutation {
+  """Add comment to daily report"""
+  addDailyReportComment(input: AddCommentInput!): DailyReportCommentModel!
+
   """Add quiz question (Teacher)"""
   addQuizQuestion(input: AddQuizQuestionInput!): QuizQuestionModel!
 
@@ -343,11 +407,17 @@ type Mutation {
   """Create a new classroom (Teacher only)"""
   createClassroom(input: CreateClassroomInput!): ClassroomListModel!
 
+  """Create a daily report (Teacher only)"""
+  createDailyReport(input: CreateDailyReportInput!): DailyReportModel!
+
   """Create a new lesson in module (Teacher only)"""
   createLesson(input: CreateLessonInput!): LessonModel!
 
   """Create a new module in subject (Teacher only)"""
   createModule(input: CreateModuleInput!): ModuleModel!
+
+  """Create a note for a student"""
+  createNote(input: CreateNoteInput!): NoteModel!
 
   """Teacher creates a student account"""
   createStudent(input: CreateStudentInput!): UserModel!
@@ -361,11 +431,17 @@ type Mutation {
   """Delete classroom (Teacher only)"""
   deleteClassroom(classroomId: String!): EnrollmentResultModel!
 
+  """Delete a daily report (Teacher only)"""
+  deleteDailyReport(reportId: String!): DailyReportModel!
+
   """Delete lesson (Teacher only)"""
   deleteLesson(lessonId: String!): LessonResultModel!
 
   """Delete module (Teacher only)"""
   deleteModule(moduleId: String!): ModuleResultModel!
+
+  """Delete a note"""
+  deleteNote(noteId: String!): NoteModel!
 
   """Delete quiz question (Teacher)"""
   deleteQuizQuestion(questionId: String!): ResultModel!
@@ -418,11 +494,17 @@ type Mutation {
   """Update classroom (Teacher only)"""
   updateClassroom(input: UpdateClassroomInput!): ClassroomListModel!
 
+  """Update a daily report (Teacher only)"""
+  updateDailyReport(input: UpdateDailyReportInput!): DailyReportModel!
+
   """Update lesson (Teacher only)"""
   updateLesson(input: UpdateLessonInput!): LessonModel!
 
   """Update module (Teacher only)"""
   updateModule(input: UpdateModuleInput!): ModuleModel!
+
+  """Update a note"""
+  updateNote(input: UpdateNoteInput!): NoteModel!
 
   """Update own profile"""
   updateProfile(input: UpdateProfileInput!): UserModel!
@@ -435,6 +517,36 @@ type Mutation {
 
   """Update task step (Teacher)"""
   updateTaskStep(input: UpdateTaskStepInput!): TaskStepModel!
+}
+
+type NoteAuthorModel {
+  id: ID!
+  name: String!
+  role: String!
+}
+
+type NoteModel {
+  content: String!
+  createdAt: DateTime!
+  id: ID!
+  parentNoteId: String
+  replyCount: Int!
+  studentId: String!
+  updatedAt: DateTime!
+  writtenBy: NoteAuthorModel!
+  writtenById: String!
+}
+
+type NoteWithRepliesModel {
+  content: String!
+  createdAt: DateTime!
+  id: ID!
+  parentNoteId: String
+  replies: [NoteWithRepliesModel!]!
+  studentId: String!
+  updatedAt: DateTime!
+  writtenBy: NoteAuthorModel!
+  writtenById: String!
 }
 
 type Query {
@@ -455,6 +567,12 @@ type Query {
 
   """Get all classrooms for current teacher"""
   classrooms: [ClassroomListModel!]!
+
+  """Get daily report detail"""
+  dailyReportDetail(reportId: String!): DailyReportModel!
+
+  """Get daily reports for a student"""
+  dailyReportsByStudent(endDate: String, startDate: String, studentId: String!): [DailyReportModel!]!
 
   """Health check endpoint"""
   health: String!
@@ -482,6 +600,12 @@ type Query {
 
   """Get my submission for an assignment"""
   mySubmission(assignmentId: String!): SubmissionDetailModel
+
+  """Get note detail with replies"""
+  noteDetail(noteId: String!): NoteWithRepliesModel!
+
+  """Get notes for a student"""
+  notesByStudent(studentId: String!): [NoteWithRepliesModel!]!
 
   """Get subject detail with modules"""
   subjectDetail(subjectId: String!): SubjectDetailModel!
@@ -754,6 +878,15 @@ input UpdateClassroomInput {
   name: String
 }
 
+input UpdateDailyReportInput {
+  achievements: String
+  activities: [String!]
+  challenges: String
+  mood: Mood
+  notes: String
+  reportId: String!
+}
+
 input UpdateLessonInput {
   content: String
   description: String
@@ -770,6 +903,11 @@ input UpdateModuleInput {
   isActive: Boolean
   name: String
   order: Int
+}
+
+input UpdateNoteInput {
+  content: String!
+  noteId: String!
 }
 
 input UpdateProfileInput {

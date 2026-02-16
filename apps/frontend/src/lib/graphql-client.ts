@@ -1059,3 +1059,290 @@ export const ASSIGNMENT_QUERIES = {
     }
   `,
 };
+
+// Notes Mutations & Queries
+export const NOTE_MUTATIONS = {
+  CREATE: `
+    mutation CreateNote($input: CreateNoteInput!) {
+      createNote(input: $input) {
+        id
+        content
+        studentId
+        writtenById
+        writtenBy {
+          id
+          name
+          role
+        }
+        parentNoteId
+        replyCount
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  UPDATE: `
+    mutation UpdateNote($input: UpdateNoteInput!) {
+      updateNote(input: $input) {
+        id
+        content
+        studentId
+        writtenById
+        writtenBy {
+          id
+          name
+          role
+        }
+        parentNoteId
+        replyCount
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  DELETE: `
+    mutation DeleteNote($noteId: String!) {
+      deleteNote(noteId: $noteId) {
+        success
+        message
+      }
+    }
+  `,
+};
+
+export const NOTE_QUERIES = {
+  BY_STUDENT: `
+    query NotesByStudent($studentId: String!) {
+      notesByStudent(studentId: $studentId) {
+        id
+        content
+        studentId
+        writtenById
+        writtenBy {
+          id
+          name
+          role
+        }
+        parentNoteId
+        replies {
+          id
+          content
+          studentId
+          writtenById
+          writtenBy {
+            id
+            name
+            role
+          }
+          parentNoteId
+          replyCount
+          createdAt
+          updatedAt
+        }
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  DETAIL: `
+    query NoteDetail($noteId: String!) {
+      noteDetail(noteId: $noteId) {
+        id
+        content
+        studentId
+        writtenById
+        writtenBy {
+          id
+          name
+          role
+        }
+        parentNoteId
+        replies {
+          id
+          content
+          studentId
+          writtenById
+          writtenBy {
+            id
+            name
+            role
+          }
+          parentNoteId
+          replyCount
+          createdAt
+          updatedAt
+        }
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+};
+
+// Daily Reports Mutations & Queries
+export const DAILY_REPORT_MUTATIONS = {
+  CREATE: `
+    mutation CreateDailyReport($input: CreateDailyReportInput!) {
+      createDailyReport(input: $input) {
+        id
+        date
+        studentId
+        createdById
+        createdBy {
+          id
+          name
+          role
+        }
+        mood
+        activities
+        achievements
+        challenges
+        notes
+        comments {
+          id
+          content
+          dailyReportId
+          commentedById
+          commentedBy {
+            id
+            name
+            role
+          }
+          createdAt
+        }
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  UPDATE: `
+    mutation UpdateDailyReport($input: UpdateDailyReportInput!) {
+      updateDailyReport(input: $input) {
+        id
+        date
+        studentId
+        createdById
+        createdBy {
+          id
+          name
+          role
+        }
+        mood
+        activities
+        achievements
+        challenges
+        notes
+        comments {
+          id
+          content
+          dailyReportId
+          commentedById
+          commentedBy {
+            id
+            name
+            role
+          }
+          createdAt
+        }
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  DELETE: `
+    mutation DeleteDailyReport($reportId: String!) {
+      deleteDailyReport(reportId: $reportId) {
+        success
+        message
+      }
+    }
+  `,
+  ADD_COMMENT: `
+    mutation AddDailyReportComment($input: AddCommentInput!) {
+      addDailyReportComment(input: $input) {
+        id
+        content
+        dailyReportId
+        commentedById
+        commentedBy {
+          id
+          name
+          role
+        }
+        createdAt
+      }
+    }
+  `,
+};
+
+export const DAILY_REPORT_QUERIES = {
+  BY_STUDENT: `
+    query DailyReportsByStudent($studentId: String!, $startDate: String, $endDate: String) {
+      dailyReportsByStudent(studentId: $studentId, startDate: $startDate, endDate: $endDate) {
+        id
+        date
+        studentId
+        createdById
+        createdBy {
+          id
+          name
+          role
+        }
+        mood
+        activities
+        achievements
+        challenges
+        notes
+        comments {
+          id
+          content
+          dailyReportId
+          commentedById
+          commentedBy {
+            id
+            name
+            role
+          }
+          createdAt
+        }
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  DETAIL: `
+    query DailyReportDetail($reportId: String!) {
+      dailyReportDetail(reportId: $reportId) {
+        id
+        date
+        studentId
+        createdById
+        createdBy {
+          id
+          name
+          role
+        }
+        mood
+        activities
+        achievements
+        challenges
+        notes
+        comments {
+          id
+          content
+          dailyReportId
+          commentedById
+          commentedBy {
+            id
+            name
+            role
+          }
+          createdAt
+        }
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+};
+

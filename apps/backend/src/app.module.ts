@@ -11,6 +11,8 @@ import { SubjectsModule } from './subjects/subjects.module';
 import { ModulesModule } from './modules/modules.module';
 import { LessonsModule } from './lessons/lessons.module';
 import { AssignmentsModule } from './assignments/assignments.module';
+import { NotesModule } from './notes/notes.module';
+import { DailyReportsModule } from './daily-reports/daily-reports.module';
 
 @Module({
   imports: [
@@ -29,6 +31,8 @@ import { AssignmentsModule } from './assignments/assignments.module';
     ModulesModule,
     LessonsModule,
     AssignmentsModule,
+    NotesModule,
+    DailyReportsModule,
   ],
   providers: [HealthResolver],
 })
