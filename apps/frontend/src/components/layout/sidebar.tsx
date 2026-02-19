@@ -25,29 +25,36 @@ interface NavItem {
 
 const teacherNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Siswa', href: '/dashboard/students', icon: Users },
   { label: 'Kelas', href: '/dashboard/classrooms', icon: GraduationCap },
-  { label: 'Materi', href: '/dashboard/modules', icon: BookOpen },
-  { label: 'Tugas', href: '/dashboard/assignments', icon: ClipboardList },
-  { label: 'Laporan Harian', href: '/dashboard/daily-reports', icon: FileText },
-  { label: 'Progress', href: '/dashboard/progress', icon: BarChart3 },
-  { label: 'Catatan', href: '/dashboard/notes', icon: MessageSquare },
-  { label: 'Pengaturan', href: '/dashboard/settings', icon: Settings },
+  { label: 'Siswa', href: '/dashboard/students', icon: Users },
+  { label: 'Penilaian Tertunda', href: '/dashboard/submissions/pending', icon: ClipboardList },
+  { label: 'Media Library', href: '/dashboard/media-test', icon: FileText },
+  // TODO: Create these pages before re-enabling (see BUG-REPORT-DAY1-9.md)
+  // { label: 'Materi', href: '/dashboard/modules', icon: BookOpen },
+  // { label: 'Tugas', href: '/dashboard/assignments', icon: ClipboardList },
+  // { label: 'Laporan Harian', href: '/dashboard/daily-reports', icon: FileText },
+  // { label: 'Progress', href: '/dashboard/progress', icon: BarChart3 },
+  // { label: 'Catatan', href: '/dashboard/notes', icon: MessageSquare },
+  // { label: 'Pengaturan', href: '/dashboard/settings', icon: Settings },
 ];
 
 const studentNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Pelajaran', href: '/dashboard/lessons', icon: BookOpen },
+  { label: 'Kelas', href: '/dashboard/classrooms', icon: GraduationCap },
+  { label: 'Nilai', href: '/dashboard/grades', icon: BarChart3 },
   { label: 'Tugas', href: '/dashboard/assignments', icon: ClipboardList },
-  { label: 'XP & Level', href: '/dashboard/xp', icon: Star },
-  { label: 'Catatan', href: '/dashboard/notes', icon: MessageSquare },
+  // TODO: Create these pages before re-enabling (see BUG-REPORT-DAY1-9.md)
+  // { label: 'Pelajaran', href: '/dashboard/lessons', icon: BookOpen },
+  // { label: 'XP & Level', href: '/dashboard/xp', icon: Star },
+  // { label: 'Catatan', href: '/dashboard/notes', icon: MessageSquare },
 ];
 
 const parentNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Progress Anak', href: '/dashboard/progress', icon: BarChart3 },
-  { label: 'Laporan Harian', href: '/dashboard/daily-reports', icon: FileText },
-  { label: 'Catatan', href: '/dashboard/notes', icon: MessageSquare },
+  // TODO: Create these pages before re-enabling (see BUG-REPORT-DAY1-9.md)
+  // { label: 'Progress Anak', href: '/dashboard/progress', icon: BarChart3 },
+  // { label: 'Laporan Harian', href: '/dashboard/daily-reports', icon: FileText },
+  // { label: 'Catatan', href: '/dashboard/notes', icon: MessageSquare },
 ];
 
 export function Sidebar() {

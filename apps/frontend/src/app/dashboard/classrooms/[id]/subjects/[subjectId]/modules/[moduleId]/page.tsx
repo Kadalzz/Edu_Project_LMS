@@ -28,6 +28,7 @@ import {
   ClipboardList,
 } from 'lucide-react';
 import Link from 'next/link';
+import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 
 export default function ModuleDetailPage() {
   const params = useParams();
@@ -74,6 +75,12 @@ export default function ModuleDetailPage() {
 
   return (
     <div>
+      <Breadcrumbs items={[
+        { label: 'Kelas', href: '/dashboard/classrooms' },
+        { label: 'Detail Kelas', href: `/dashboard/classrooms/${classroomId}` },
+        { label: mod.name }
+      ]} />
+
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <Link href={`/dashboard/classrooms/${classroomId}/subjects/${subjectId}`}>

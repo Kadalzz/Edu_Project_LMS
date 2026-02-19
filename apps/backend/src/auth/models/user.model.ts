@@ -1,4 +1,8 @@
 import { ObjectType, Field, ID, registerEnumType } from '@nestjs/graphql';
+import { StudentModel } from './student.model';
+
+// Re-export StudentModel for backwards compatibility
+export { StudentModel } from './student.model';
 
 export enum UserRole {
   TEACHER = 'TEACHER',
@@ -47,28 +51,10 @@ export class UserModel {
 
   @Field()
   updatedAt: Date;
-}
 
-@ObjectType()
-export class StudentModel {
-  @Field(() => ID)
-  id: string;
+  @Field(() => StudentModel, { nullable: true })
+  studentProfile?: StudentModel;
 
-  @Field()
-  userId: string;
-
-  @Field(() => UserModel)
-  user: UserModel;
-
-  @Field()
-  level: number;
-
-  @Field()
-  totalXP: number;
-
-  @Field()
-  currentXP: number;
-
-  @Field()
-  createdAt: Date;
+  @Field(() => [StudentModel], { nullable: true })
+  children?: StudentModel[];
 }

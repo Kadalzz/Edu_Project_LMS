@@ -156,6 +156,21 @@ export class TaskStepModel {
 // ============================================
 
 @ObjectType()
+export class AssignmentBasicModel {
+  @Field(() => ID)
+  id: string;
+
+  @Field()
+  title: string;
+
+  @Field(() => AssignmentType)
+  type: AssignmentType;
+
+  @Field()
+  lessonId: string;
+}
+
+@ObjectType()
 export class AssignmentModel {
   @Field(() => ID)
   id: string;
@@ -407,6 +422,12 @@ export class SubmissionModel {
 
   @Field(() => StudentInfoModel, { nullable: true })
   student?: StudentInfoModel;
+
+  @Field(() => AssignmentBasicModel, { nullable: true })
+  assignment?: AssignmentBasicModel;
+
+  @Field(() => Int, { nullable: true })
+  pendingStepsCount?: number;
 }
 
 @ObjectType()
@@ -480,3 +501,53 @@ export class QuizResultModel {
   @Field()
   submissionId: string;
 }
+
+// ============================================
+// SUBMISSION CONTEXT (for redirect shortcuts)
+// ============================================
+
+@ObjectType()
+export class SubmissionContextSubjectModel {
+  @Field(() => String)
+  id: string;
+
+  @Field(() => String)
+  classroomId: string;
+}
+
+@ObjectType()
+export class SubmissionContextModuleModel {
+  @Field(() => String)
+  id: string;
+
+  @Field(() => SubmissionContextSubjectModel)
+  subject: SubmissionContextSubjectModel;
+}
+
+@ObjectType()
+export class SubmissionContextLessonModel {
+  @Field(() => String)
+  id: string;
+
+  @Field(() => SubmissionContextModuleModel)
+  module: SubmissionContextModuleModel;
+}
+
+@ObjectType()
+export class SubmissionContextAssignmentModel {
+  @Field(() => String)
+  id: string;
+
+  @Field(() => SubmissionContextLessonModel)
+  lesson: SubmissionContextLessonModel;
+}
+
+@ObjectType()
+export class SubmissionContextModel {
+  @Field(() => String)
+  id: string;
+
+  @Field(() => SubmissionContextAssignmentModel)
+  assignment: SubmissionContextAssignmentModel;
+}
+

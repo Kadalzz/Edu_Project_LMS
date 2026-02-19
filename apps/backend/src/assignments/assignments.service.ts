@@ -892,6 +892,75 @@ export class AssignmentsService {
     return this.mapSubmissionDetail(submission);
   }
 
+  async getSubmissionContext(submissionId: string, userId: string) {
+    const submission = await this.prisma.submission.findUnique({
+      where: { id: submissionId },
+      select: {
+        id: true,
+        studentId: true,
+        assignment: {
+          select: {
+            id: true,
+            lessonId: true,
+            lesson: {
+              select: {
+                id: true,
+                moduleId: true,
+                module: {
+                  select: {
+                    id: true,
+                    subjectId: true,
+                    subject: {
+                      select: {
+                        id: true,
+                        classroomId: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!submission) {
+      throw new NotFoundException('Submission tidak ditemukan');
+    }
+
+    // Verify access (teacher or the student themselves)
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (user?.role === 'TEACHER') {
+      await this.verifyTeacherOwnsLesson(submission.assignment.lessonId, userId);
+    } else {
+      const student = await this.prisma.student.findUnique({
+        where: { userId },
+      });
+      if (!student || student.id !== submission.studentId) {
+        throw new ForbiddenException('Anda tidak memiliki akses ke submission ini');
+      }
+    }
+
+    // Return only the context needed for redirect
+    return {
+      id: submission.id,
+      assignment: {
+        id: submission.assignment.id,
+        lesson: {
+          id: submission.assignment.lesson.id,
+          module: {
+            id: submission.assignment.lesson.module.id,
+            subject: {
+              id: submission.assignment.lesson.module.subject.id,
+              classroomId: submission.assignment.lesson.module.subject.classroomId,
+            },
+          },
+        },
+      },
+    };
+  }
+
   // ============================================
   // HELPERS
   // ============================================
@@ -996,5 +1065,131 @@ export class AssignmentsService {
     if (!student || student.id !== submission.studentId) {
       throw new ForbiddenException('Anda tidak memiliki akses ke submission ini');
     }
+  }
+
+  async getPendingSubmissions(teacherId: string) {
+    // Get all classrooms where this teacher is assigned
+    const classroomTeachers = await this.prisma.classroomTeacher.findMany({
+      where: { teacherId },
+      include: {
+        classroom: {
+          include: {
+            subjects: {
+              include: {
+                modules: {
+                  include: {
+                    lessons: {
+                      include: {
+                        assignments: {
+                          include: {
+                            submissions: {
+                              where: {
+                                OR: [
+                                  { status: 'SUBMITTED' }, // Quiz submissions pending grading
+                                  {
+                                    // Task analysis with pending step submissions
+                                    stepSubmissions: {
+                                      some: {
+                                        status: 'PENDING',
+                                      },
+                                    },
+                                  },
+                                ],
+                              },
+                              include: {
+                                student: {
+                                  include: {
+                                    user: {
+                                      select: { id: true, studentName: true },
+                                    },
+                                  },
+                                },
+                                assignment: {
+                                  select: {
+                                    id: true,
+                                    title: true,
+                                    type: true,
+                                    lessonId: true,
+                                  },
+                                },
+                                stepSubmissions: {
+                                  where: { status: 'PENDING' },
+                                },
+                              },
+                              orderBy: { submittedAt: 'desc' },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Flatten all submissions from nested structure
+    const pendingSubmissions: any[] = [];
+    classroomTeachers.forEach((ct) => {
+      ct.classroom.subjects.forEach((subject) => {
+        subject.modules.forEach((module) => {
+          module.lessons.forEach((lesson) => {
+            lesson.assignments.forEach((assignment) => {
+              assignment.submissions.forEach((submission) => {
+                pendingSubmissions.push({
+                  ...submission,
+                  student: {
+                    id: submission.student.id,
+                    userId: submission.student.userId,
+                    level: submission.student.level,
+                    totalXP: submission.student.totalXP,
+                    studentName: submission.student.user.studentName,
+                  },
+                  assignment: submission.assignment,
+                  pendingStepsCount: submission.stepSubmissions?.length || 0,
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+
+    return pendingSubmissions;
+  }
+
+  async getRecentGrades(studentUserId: string, limit = 5) {
+    const student = await this.prisma.student.findUnique({
+      where: { userId: studentUserId },
+    });
+
+    if (!student) {
+      throw new NotFoundException('Student tidak ditemukan');
+    }
+
+    const recentSubmissions = await this.prisma.submission.findMany({
+      where: {
+        studentId: student.id,
+        status: 'GRADED',
+        score: { not: null },
+      },
+      include: {
+        assignment: {
+          select: {
+            id: true,
+            title: true,
+            type: true,
+            xpReward: true,
+          },
+        },
+      },
+      orderBy: { gradedAt: 'desc' },
+      take: limit,
+    });
+
+    return recentSubmissions;
   }
 }

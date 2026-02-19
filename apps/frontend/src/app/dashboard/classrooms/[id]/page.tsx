@@ -30,6 +30,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
+import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 
 // ============================================
 // ICON OPTIONS for Subjects
@@ -91,6 +92,11 @@ export default function ClassroomDetailPage() {
 
   return (
     <div>
+      <Breadcrumbs items={[
+        { label: 'Kelas', href: '/dashboard/classrooms' },
+        { label: classroom.name }
+      ]} />
+
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <Link href="/dashboard/classrooms">

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { EmptyState } from '@/components/ui/empty-state';
 import {
   GraduationCap,
   Plus,
@@ -20,6 +21,7 @@ import {
   Eye,
 } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 interface Classroom {
   id: string;
@@ -27,7 +29,7 @@ interface Classroom {
   description?: string;
   isActive: boolean;
   studentCount: number;
-  subjectCount: number;
+ subjectCount: number;
   createdAt: string;
 }
 
@@ -36,7 +38,7 @@ export default function ClassroomsPage() {
   const queryClient = useQueryClient();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingClassroom, setEditingClassroom] = useState<Classroom | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingClassroom, setDeletingClassroom] = useState<Classroom | null>(null);
 
   // Redirect if not teacher
   if (user?.role !== 'TEACHER') {
@@ -46,6 +48,28 @@ export default function ClassroomsPage() {
       </div>
     );
   }
+
+  const handleDelete = (classroom: Classroom) => {
+    setDeletingClassroom(classroom);
+  };
+
+  const confirmDelete = () => {
+    if (!deletingClassroom) return;
+    deleteClassroom(deletingClassroom.id);
+  };
+
+  const deleteClassroom = (id: string) => {
+    graphqlRequest(CLASSROOM_MUTATIONS.DELETE, { classroomId: id }, { token: accessToken })
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ['classrooms'] });
+        queryClient.invalidateQueries({ queryKey: ['myClassrooms'] });
+        toast.success('Kelas berhasil dihapus');
+        setDeletingClassroom(null);
+      })
+      .catch((error) => {
+        toast.error('Gagal menghapus kelas: ' + (error.message || 'Terjadi kesalahan'));
+      });
+  };
 
   return (
     <div>
@@ -72,17 +96,38 @@ export default function ClassroomsPage() {
       )}
 
       {/* Delete Confirmation */}
-      {deletingId && (
-        <DeleteConfirmModal
-          classroomId={deletingId}
-          onClose={() => setDeletingId(null)}
-        />
+      {deletingClassroom && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setDeletingClassroom(null)}>
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-sm mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">Hapus Kelas?</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              Apakah Anda yakin ingin menghapus kelas &quot;{deletingClassroom.name}&quot;? 
+              Semua data terkait akan ikut terhapus dan tidak dapat dikembalikan.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setDeletingClassroom(null)}
+              >
+                Batal
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex-1"
+                onClick={confirmDelete}
+              >
+                Hapus
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Classroom List */}
       <ClassroomList
         onEdit={setEditingClassroom}
-        onDelete={setDeletingId}
+        onDelete={handleDelete}
       />
     </div>
   );
@@ -97,7 +142,7 @@ function ClassroomList({
   onDelete,
 }: {
   onEdit: (c: Classroom) => void;
-  onDelete: (id: string) => void;
+  onDelete: (c: Classroom) => void;
 }) {
   const { accessToken } = useAuthStore();
 
@@ -114,6 +159,7 @@ function ClassroomList({
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-3 text-muted-foreground">Memuat data kelas...</span>
       </div>
     );
   }
@@ -121,20 +167,21 @@ function ClassroomList({
   if (error) {
     return (
       <div className="text-center py-12">
-        <p className="text-red-500">Error: {(error as Error).message}</p>
+        <div className="inline-flex flex-col items-center">
+          <p className="text-red-600 font-medium mb-2">Gagal memuat data kelas</p>
+          <p className="text-sm text-gray-500">Coba muat ulang halaman atau hubungi administrator</p>
+        </div>
       </div>
     );
   }
 
   if (classrooms.length === 0) {
     return (
-      <div className="text-center py-12">
-        <GraduationCap className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Belum ada kelas</h3>
-        <p className="text-muted-foreground">
-          Klik &quot;Tambah Kelas&quot; untuk membuat kelas baru
-        </p>
-      </div>
+      <EmptyState
+        icon={GraduationCap}
+        title="Belum ada kelas"
+        description="Klik tombol 'Tambah Kelas' di atas untuk membuat kelas pertama Anda"
+      />
     );
   }
 
@@ -198,7 +245,7 @@ function ClassroomList({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                onClick={() => onDelete(classroom.id)}
+                onClick={() => onDelete(classroom)}
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
@@ -226,56 +273,50 @@ function ClassroomFormModal({
   const isEdit = !!classroom;
   const [name, setName] = useState(classroom?.name || '');
   const [description, setDescription] = useState(classroom?.description || '');
-
-  const createMutation = useMutation({
-    mutationFn: (input: { name: string; description?: string }) =>
-      graphqlRequest(CLASSROOM_MUTATIONS.CREATE, { input }, { token: accessToken }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['classrooms'] });
-      queryClient.invalidateQueries({ queryKey: ['myClassrooms'] });
-      onClose();
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: (input: { id: string; name?: string; description?: string }) =>
-      graphqlRequest(CLASSROOM_MUTATIONS.UPDATE, { input }, { token: accessToken }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['classrooms'] });
-      queryClient.invalidateQueries({ queryKey: ['myClassrooms'] });
-      onClose();
-    },
-  });
-
-  const isSubmitting = createMutation.isPending || updateMutation.isPending;
-  const error = createMutation.error || updateMutation.error;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
-
-    if (isEdit) {
-      updateMutation.mutate({
-        id: classroom.id,
-        name: name.trim(),
-        description: description.trim() || undefined,
-      });
-    } else {
-      createMutation.mutate({
-        name: name.trim(),
-        description: description.trim() || undefined,
-      });
+    if (!name.trim()) {
+      setError('Nama kelas harus diisi');
+      return;
     }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    const input = isEdit
+      ? { id: classroom.id, name: name.trim(), description: description.trim() || undefined }
+      : { name: name.trim(), description: description.trim() || undefined };
+
+    const mutation = isEdit ? CLASSROOM_MUTATIONS.UPDATE : CLASSROOM_MUTATIONS.CREATE;
+
+    graphqlRequest(mutation, { input }, { token: accessToken })
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ['classrooms'] });
+        queryClient.invalidateQueries({ queryKey: ['myClassrooms'] });
+        toast.success(isEdit ? 'Kelas berhasil diperbarui' : 'Kelas berhasil dibuat');
+        onClose();
+      })
+      .catch((error) => {
+        const errorMessage = error.message || 'Terjadi kesalahan';
+        setError(errorMessage);
+        toast.error(isEdit ? 'Gagal memperbarui kelas' : 'Gagal membuat kelas');
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-md mx-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-lg font-semibold">
             {isEdit ? 'Edit Kelas' : 'Tambah Kelas Baru'}
           </h2>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded" disabled={isSubmitting}>
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -289,6 +330,7 @@ function ClassroomFormModal({
               placeholder="Contoh: Kelas 1A"
               required
               autoFocus
+              disabled={isSubmitting}
             />
           </div>
           <div className="space-y-2">
@@ -298,10 +340,13 @@ function ClassroomFormModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Deskripsi singkat tentang kelas"
+              disabled={isSubmitting}
             />
           </div>
           {error && (
-            <p className="text-sm text-red-500">{(error as Error).message}</p>
+            <div className="p-3 rounded-md bg-red-50 border border-red-200">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
           )}
           <div className="flex gap-3 pt-2">
             <Button
@@ -314,76 +359,11 @@ function ClassroomFormModal({
               Batal
             </Button>
             <Button type="submit" className="flex-1" disabled={isSubmitting || !name.trim()}>
-              {isSubmitting ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : null}
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               {isEdit ? 'Simpan' : 'Buat Kelas'}
             </Button>
           </div>
         </form>
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// DELETE CONFIRMATION MODAL
-// ============================================
-
-function DeleteConfirmModal({
-  classroomId,
-  onClose,
-}: {
-  classroomId: string;
-  onClose: () => void;
-}) {
-  const { accessToken } = useAuthStore();
-  const queryClient = useQueryClient();
-
-  const deleteMutation = useMutation({
-    mutationFn: () =>
-      graphqlRequest(CLASSROOM_MUTATIONS.DELETE, { classroomId }, { token: accessToken }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['classrooms'] });
-      queryClient.invalidateQueries({ queryKey: ['myClassrooms'] });
-      onClose();
-    },
-  });
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-sm mx-4 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Hapus Kelas?</h2>
-        <p className="text-sm text-muted-foreground mb-6">
-          Semua data terkait kelas ini (siswa terdaftar, mata pelajaran, dll) akan ikut terhapus.
-          Tindakan ini tidak bisa dibatalkan.
-        </p>
-        {deleteMutation.error && (
-          <p className="text-sm text-red-500 mb-4">
-            {(deleteMutation.error as Error).message}
-          </p>
-        )}
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            className="flex-1"
-            onClick={onClose}
-            disabled={deleteMutation.isPending}
-          >
-            Batal
-          </Button>
-          <Button
-            variant="destructive"
-            className="flex-1"
-            onClick={() => deleteMutation.mutate()}
-            disabled={deleteMutation.isPending}
-          >
-            {deleteMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : null}
-            Hapus
-          </Button>
-        </div>
       </div>
     </div>
   );

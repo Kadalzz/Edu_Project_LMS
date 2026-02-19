@@ -31,6 +31,7 @@ import {
   ImageIcon,
 } from 'lucide-react';
 import Link from 'next/link';
+import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 
 // ============================================
 // TEACHER: Quiz Question Editor
@@ -1013,6 +1014,14 @@ export default function AssignmentDetailPage() {
 
   return (
     <div>
+      <Breadcrumbs items={[
+        { label: 'Kelas', href: '/dashboard/classrooms' },
+        { label: 'Detail Kelas', href: `/dashboard/classrooms/${classroomId}` },
+        { label: 'Modul', href: `${basePath.split('/lessons')[0]}` },
+        { label: 'Materi', href: basePath },
+        { label: assignment.title }
+      ]} />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">

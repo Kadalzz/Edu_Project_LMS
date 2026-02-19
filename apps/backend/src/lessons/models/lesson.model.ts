@@ -36,6 +36,9 @@ export class MediaModel {
   url: string;
 
   @Field()
+  uploadedById: string;
+
+  @Field()
   createdAt: Date;
 }
 

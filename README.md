@@ -77,6 +77,8 @@ pnpm db:push         # Push schema to database
 - ✅ Task Analysis (Step-by-step with Photo + Video submission)
 - ✅ Progress Tracking with Level/XP System
 - ✅ Teacher Notes & Daily Reports
+- ✅ Dashboard Enhancements (Parent view, Pending grading, Recent grades)
+- ✅ Media Upload & Management (Cloudflare R2, Image/Video library)
 - ✅ Email Notifications
 - ✅ Responsive Design with Basic Accessibility
 

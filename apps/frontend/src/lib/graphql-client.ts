@@ -45,6 +45,17 @@ export async function graphqlRequest<T = any>(
   return json.data;
 }
 
+// GraphQL Client compatible with graphql-request
+export const graphqlClient = {
+  async request<T = any>(
+    query: string,
+    variables?: Record<string, any>,
+  ): Promise<T> {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    return graphqlRequest<T>(query, variables, { token });
+  },
+};
+
 // Auth Queries & Mutations
 export const AUTH_MUTATIONS = {
   LOGIN: `
@@ -267,7 +278,6 @@ export const CLASSROOM_QUERIES = {
               studentName
               parentName
               avatar
-              isActive
             }
           }
         }
@@ -1058,6 +1068,49 @@ export const ASSIGNMENT_QUERIES = {
       }
     }
   `,
+  PENDING_GRADING: `
+    query PendingGrading {
+      pendingGrading {
+        id
+        assignmentId
+        studentId
+        status
+        score
+        submittedAt
+        createdAt
+        student {
+          id
+          userId
+          level
+          totalXP
+          studentName
+        }
+        assignment {
+          id
+          title
+          type
+          lessonId
+        }
+        pendingStepsCount
+      }
+    }
+  `,
+  RECENT_GRADES: `
+    query RecentGrades($limit: Float) {
+      recentGrades(limit: $limit) {
+        id
+        assignmentId
+        status
+        score
+        gradedAt
+        assignment {
+          id
+          title
+          type
+        }
+      }
+    }
+  `,
 };
 
 // Notes Mutations & Queries
@@ -1346,3 +1399,73 @@ export const DAILY_REPORT_QUERIES = {
   `,
 };
 
+// ============================================
+// PROGRESS QUERIES & MUTATIONS
+// ============================================
+
+export const PROGRESS_QUERIES = {
+  STUDENT_STATS: `
+    query StudentStats($studentId: String!) {
+      studentStats(studentId: $studentId) {
+        studentId
+        studentName
+        level
+        totalXP
+        currentXP
+        xpToNextLevel
+        levelProgress
+        totalAssignmentsCompleted
+        totalQuizzesCompleted
+        totalTasksCompleted
+        averageScore
+        subjectProgress {
+          subjectId
+          subjectName
+          subjectIcon
+          subjectColor
+          totalLessons
+          completedLessons
+          completionPercentage
+        }
+      }
+    }
+  `,
+  LEVEL_INFO: `
+    query LevelInfo($studentId: String!) {
+      levelInfo(studentId: $studentId) {
+        currentLevel
+        currentXP
+        totalXP
+        xpToNextLevel
+        progressPercentage
+      }
+    }
+  `,
+  SUBJECT_PROGRESS: `
+    query SubjectProgress($studentId: String!, $subjectId: String!) {
+      subjectProgress(studentId: $studentId, subjectId: $subjectId) {
+        subjectId
+        subjectName
+        subjectIcon
+        subjectColor
+        totalLessons
+        completedLessons
+        completionPercentage
+      }
+    }
+  `,
+};
+
+export const PROGRESS_MUTATIONS = {
+  MARK_LESSON_COMPLETE: `
+    mutation MarkLessonComplete($lessonId: String!) {
+      markLessonComplete(lessonId: $lessonId) {
+        id
+        studentId
+        lessonId
+        completed
+        completedAt
+      }
+    }
+  `,
+};

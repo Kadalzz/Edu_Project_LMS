@@ -1,4 +1,4 @@
-import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { AssignmentsService } from './assignments.service';
 import { GqlAuthGuard } from '../auth/guards/gql-auth.guard';
@@ -28,6 +28,7 @@ import {
   GradingModel,
   ResultModel,
   QuizResultModel,
+  SubmissionContextModel,
 } from './models/assignment.model';
 
 @Resolver()
@@ -263,5 +264,31 @@ export class AssignmentsResolver {
     @Args('submissionId') submissionId: string,
   ): Promise<SubmissionDetailModel> {
     return this.assignmentsService.getSubmissionDetail(submissionId, user.id) as any;
+  }
+
+  @Query(() => [SubmissionModel], { description: 'Get pending submissions for grading (Teacher)' })
+  @UseGuards(GqlAuthGuard)
+  async pendingGrading(
+    @CurrentUser() user: { id: string },
+  ): Promise<SubmissionModel[]> {
+    return this.assignmentsService.getPendingSubmissions(user.id) as any;
+  }
+
+  @Query(() => [SubmissionModel], { description: 'Get recent graded submissions (Student)' })
+  @UseGuards(GqlAuthGuard)
+  async recentGrades(
+    @CurrentUser() user: { id: string },
+    @Args('limit', { nullable: true }) limit?: number,
+  ): Promise<SubmissionModel[]> {
+    return this.assignmentsService.getRecentGrades(user.id, limit) as any;
+  }
+
+  @Query(() => SubmissionContextModel, { nullable: true, description: 'Get submission context for redirect (Teacher/Student)' })
+  @UseGuards(GqlAuthGuard)
+  async submission(
+    @CurrentUser() user: { id: string },
+    @Args('id', { type: () => String }) id: string,
+  ): Promise<SubmissionContextModel> {
+    return this.assignmentsService.getSubmissionContext(id, user.id) as any;
   }
 }

@@ -28,6 +28,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import Link from 'next/link';
+import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 
 export default function SubmissionDetailPage() {
   const params = useParams();
@@ -119,6 +120,15 @@ export default function SubmissionDetailPage() {
 
   return (
     <div>
+      <Breadcrumbs items={[
+        { label: 'Kelas', href: '/dashboard/classrooms' },
+        { label: 'Detail Kelas', href: `/dashboard/classrooms/${classroomId}` },
+        { label: 'Modul', href: `/dashboard/classrooms/${classroomId}/subjects/${subjectId}/modules/${moduleId}` },
+        { label: 'Materi', href: `/dashboard/classrooms/${classroomId}/subjects/${subjectId}/modules/${moduleId}/lessons/${lessonId}` },
+        { label: submission.assignment?.title || 'Tugas', href: basePath },
+        { label: `Submission - ${submission.student?.studentName || 'Siswa'}` }
+      ]} />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">

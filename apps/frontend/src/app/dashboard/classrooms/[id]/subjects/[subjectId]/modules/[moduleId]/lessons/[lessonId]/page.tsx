@@ -25,6 +25,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
+import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 
 export default function LessonEditorPage() {
   const params = useParams();
@@ -127,6 +128,13 @@ export default function LessonEditorPage() {
 
   return (
     <div>
+      <Breadcrumbs items={[
+        { label: 'Kelas', href: '/dashboard/classrooms' },
+        { label: 'Detail Kelas', href: `/dashboard/classrooms/${classroomId}` },
+        { label: 'Modul', href: `/dashboard/classrooms/${classroomId}/subjects/${subjectId}/modules/${moduleId}` },
+        { label: lesson.title }
+      ]} />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">

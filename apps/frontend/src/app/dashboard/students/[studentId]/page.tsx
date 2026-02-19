@@ -4,16 +4,17 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/lib/auth-store';
-import { graphqlRequest, NOTE_QUERIES, NOTE_MUTATIONS, DAILY_REPORT_QUERIES, DAILY_REPORT_MUTATIONS } from '@/lib/graphql-client';
+import { graphqlRequest, NOTE_QUERIES, NOTE_MUTATIONS, DAILY_REPORT_QUERIES, DAILY_REPORT_MUTATIONS, PROGRESS_QUERIES } from '@/lib/graphql-client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar, MessageSquare, FileText, User, TrendingUp, Award } from 'lucide-react';
+import { Calendar, MessageSquare, FileText, User, TrendingUp, Award, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { LevelBadge, XPProgress, SubjectProgressBar, StatsCard } from '@/components/dashboard/progress-components';
 
 type Mood = 'VERY_SAD' | 'SAD' | 'NEUTRAL' | 'HAPPY' | 'VERY_HAPPY';
 
@@ -69,6 +70,15 @@ export default function StudentDetailPage() {
     queryFn: () => graphqlRequest(DAILY_REPORT_QUERIES.BY_STUDENT, { studentId }, { token: accessToken }),
     enabled: !!accessToken && !!studentId,
   });
+
+  // Fetch student stats
+  const { data: statsData, isLoading: statsLoading } = useQuery({
+    queryKey: ['studentStats', studentId],
+    queryFn: () => graphqlRequest(PROGRESS_QUERIES.STUDENT_STATS, { studentId }, { token: accessToken }),
+    enabled: !!accessToken && !!studentId,
+  });
+
+  const studentStats = statsData?.studentStats;
 
   // Create note mutation
   const createNoteMutation = useMutation({
@@ -185,20 +195,86 @@ export default function StudentDetailPage() {
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Award className="w-5 h-5" />
-                Informasi Siswa
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Student ID: {studentId}</p>
-                <p className="text-sm">Fitur overview akan ditambahkan (level, XP, recent activity)</p>
+          {statsLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <>
+              {/* Level & XP Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Award className="w-5 h-5" />
+                    Level & XP
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-6">
+                    <LevelBadge level={studentStats?.level || 1} size="lg" />
+                    <div className="flex-1">
+                      <XPProgress
+                        currentXP={studentStats?.currentXP || 0}
+                        xpToNextLevel={studentStats?.xpToNextLevel || 100}
+                        level={studentStats?.level || 1}
+                        showLabel={true}
+                      />
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Total XP: <span className="font-semibold">{studentStats?.totalXP || 0}</span>
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatsCard
+                  title="Tugas Selesai"
+                  value={studentStats?.totalAssignmentsCompleted || 0}
+                  description={`${studentStats?.totalQuizzesCompleted || 0} quiz, ${studentStats?.totalTasksCompleted || 0} task`}
+                />
+                <StatsCard
+                  title="Rata-rata Nilai"
+                  value={studentStats?.averageScore?.toFixed(1) || '0.0'}
+                  description="Dari semua tugas"
+                />
+                <StatsCard
+                  title="Level"
+                  value={studentStats?.level || 1}
+                  description={`${studentStats?.levelProgress?.toFixed(0) || 0}% ke level berikutnya`}
+                />
+                <StatsCard
+                  title="Total XP"
+                  value={studentStats?.totalXP || 0}
+                  description={`${studentStats?.currentXP || 0} XP di level ini`}
+                />
               </div>
-            </CardContent>
-          </Card>
+
+              {/* Subject Progress */}
+              {studentStats?.subjectProgress && studentStats.subjectProgress.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Progress per Mata Pelajaran</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {studentStats.subjectProgress.map((subject: any) => (
+                        <SubjectProgressBar
+                          key={subject.subjectId}
+                          subjectName={subject.subjectName}
+                          completedLessons={subject.completedLessons}
+                          totalLessons={subject.totalLessons}
+                          color={subject.subjectColor || '#3b82f6'}
+                          icon={subject.subjectIcon}
+                        />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
         </TabsContent>
 
         {/* Notes Tab */}

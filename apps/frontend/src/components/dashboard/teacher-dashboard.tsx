@@ -2,9 +2,14 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/lib/auth-store';
-import { graphqlRequest, USER_QUERIES } from '@/lib/graphql-client';
+import { graphqlRequest, USER_QUERIES, PROGRESS_QUERIES, ASSIGNMENT_QUERIES } from '@/lib/graphql-client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, GraduationCap, BookOpen, ClipboardList, Loader2 } from 'lucide-react';
+import { Users, GraduationCap, BookOpen, ClipboardList, Loader2, Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { LevelBadge } from './progress-components';
+import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
+import { formatDistanceToNow } from 'date-fns';
+import { id as idLocale } from 'date-fns/locale';
 
 export function TeacherDashboard() {
   const { user, accessToken } = useAuthStore();
@@ -21,8 +26,15 @@ export function TeacherDashboard() {
     enabled: !!accessToken,
   });
 
+  const { data: pendingData, isLoading: pendingLoading } = useQuery({
+    queryKey: ['pendingGrading'],
+    queryFn: () => graphqlRequest(ASSIGNMENT_QUERIES.PENDING_GRADING, undefined, { token: accessToken }),
+    enabled: !!accessToken,
+  });
+
   const students = studentsData?.myStudents || [];
   const classrooms = classroomsData?.myClassrooms || [];
+  const pendingSubmissions = pendingData?.pendingGrading || [];
   const activeStudents = students.filter((s: any) => s.user.isActive).length;
 
   return (
@@ -53,20 +65,100 @@ export function TeacherDashboard() {
           color="green"
         />
         <StatsCard
+          title="Perlu Dinilai"
+          value={pendingLoading ? '...' : String(pendingSubmissions.length)}
+          subtitle="Tugas pending"
+          icon={ClipboardList}
+          color="orange"
+        />
+        <StatsCard
           title="Materi"
           value="0"
           subtitle="Akan ditambahkan"
           icon={BookOpen}
           color="purple"
         />
-        <StatsCard
-          title="Tugas"
-          value="0"
-          subtitle="Belum ada tugas"
-          icon={ClipboardList}
-          color="orange"
-        />
       </div>
+
+      {/* Pending Grading Queue */}
+      <Card className="mb-8">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-orange-500" />
+              Perlu Dinilai
+            </CardTitle>
+            {pendingSubmissions.length > 0 && (
+              <Badge variant="destructive">{pendingSubmissions.length}</Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {pendingLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : pendingSubmissions.length === 0 ? (
+            <div className="text-center py-8">
+              <CheckCircle2 className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-muted-foreground">Semua tugas sudah dinilai! 🎉</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Tidak ada tugas yang perlu dinilai saat ini
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {pendingSubmissions.map((submission: any) => (
+                <Link
+                  key={submission.id}
+                  href={`/dashboard/submissions/${submission.id}`}
+                  className="flex items-center justify-between p-4 rounded-lg bg-orange-50 hover:bg-orange-100 transition-colors border border-orange-200"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0">
+                      <LevelBadge level={submission.student.level} size="sm" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900">
+                        {submission.student.studentName}
+                      </p>
+                      <p className="text-sm text-gray-600 truncate">
+                        {submission.assignment.title}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge
+                          variant={submission.assignment.type === 'QUIZ' ? 'default' : 'secondary'}
+                          className="text-xs"
+                        >
+                          {submission.assignment.type === 'QUIZ' ? 'Kuis' : 'Analisis Tugas'}
+                        </Badge>
+                        {submission.pendingStepsCount > 0 && (
+                          <Badge variant="outline" className="text-xs">
+                            {submission.pendingStepsCount} langkah pending
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="text-right">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        {submission.submittedAt
+                          ? formatDistanceToNow(new Date(submission.submittedAt), {
+                              addSuffix: true,
+                              locale: idLocale,
+                            })
+                          : 'Baru saja'}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Students List */}
       <Card>
@@ -89,16 +181,13 @@ export function TeacherDashboard() {
           ) : (
             <div className="space-y-3">
               {students.map((student: any) => (
-                <div
+                <Link
                   key={student.id}
+                  href={`/dashboard/students/${student.id}`}
                   className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-sm font-medium text-primary">
-                        {student.user.studentName?.charAt(0) || 'S'}
-                      </span>
-                    </div>
+                    <LevelBadge level={student.level} size="sm" />
                     <div>
                       <p className="font-medium text-gray-900">
                         {student.user.studentName || 'Siswa'}
@@ -119,7 +208,7 @@ export function TeacherDashboard() {
                       {student.user.isActive ? 'Aktif' : 'Nonaktif'}
                     </span>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}

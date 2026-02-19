@@ -23,6 +23,13 @@ input AddTaskStepInput {
   stepNumber: Int!
 }
 
+type AssignmentBasicModel {
+  id: ID!
+  lessonId: String!
+  title: String!
+  type: AssignmentType!
+}
+
 type AssignmentDetailModel {
   createdAt: DateTime!
   description: String
@@ -304,6 +311,14 @@ type LessonSummaryModel {
   title: String!
 }
 
+type LevelInfoModel {
+  currentLevel: Int!
+  currentXP: Int!
+  progressPercentage: Float!
+  totalXP: Int!
+  xpToNextLevel: Int!
+}
+
 input LoginInput {
   email: String!
   password: String!
@@ -317,6 +332,7 @@ type MediaModel {
   originalName: String!
   size: Int!
   type: MediaType!
+  uploadedById: String!
   url: String!
 }
 
@@ -436,6 +452,7 @@ type Mutation {
 
   """Delete lesson (Teacher only)"""
   deleteLesson(lessonId: String!): LessonResultModel!
+  deleteMedia(id: String!): Boolean!
 
   """Delete module (Teacher only)"""
   deleteModule(moduleId: String!): ModuleResultModel!
@@ -460,6 +477,9 @@ type Mutation {
 
   """Login with email and password"""
   login(input: LoginInput!): AuthResponse!
+
+  """Mark lesson as completed (Student)"""
+  markLessonComplete(lessonId: String!): ProgressModel!
 
   """Refresh access token"""
   refreshToken(input: RefreshTokenInput!): RefreshTokenResponse!
@@ -517,6 +537,7 @@ type Mutation {
 
   """Update task step (Teacher)"""
   updateTaskStep(input: UpdateTaskStepInput!): TaskStepModel!
+  uploadMedia(file: Upload!, folder: String, type: MediaType!): MediaModel!
 }
 
 type NoteAuthorModel {
@@ -547,6 +568,17 @@ type NoteWithRepliesModel {
   updatedAt: DateTime!
   writtenBy: NoteAuthorModel!
   writtenById: String!
+}
+
+type ProgressModel {
+  completed: Boolean!
+  completedAt: DateTime
+  createdAt: DateTime!
+  id: ID!
+  lessonId: String
+  studentId: String!
+  subjectId: String!
+  updatedAt: DateTime!
 }
 
 type Query {
@@ -583,8 +615,13 @@ type Query {
   """Get lessons for a module"""
   lessons(moduleId: String!): [LessonModel!]!
 
+  """Get student level info"""
+  levelInfo(studentId: String!): LevelInfoModel!
+
   """Get current logged-in user"""
   me: UserModel!
+  media(limit: Int, offset: Int, type: MediaType): [MediaModel!]!
+  mediaById(id: String!): MediaModel
 
   """Get module detail with lessons"""
   moduleDetail(moduleId: String!): ModuleDetailModel!
@@ -594,6 +631,7 @@ type Query {
 
   """Get classrooms for current teacher"""
   myClassrooms: [ClassroomModel!]!
+  myMedia(type: MediaType): [MediaModel!]!
 
   """Get all students for current teacher"""
   myStudents: [StudentWithUser!]!
@@ -607,11 +645,26 @@ type Query {
   """Get notes for a student"""
   notesByStudent(studentId: String!): [NoteWithRepliesModel!]!
 
+  """Get pending submissions for grading (Teacher)"""
+  pendingGrading: [SubmissionModel!]!
+
+  """Get recent graded submissions (Student)"""
+  recentGrades(limit: Float): [SubmissionModel!]!
+
+  """Get student statistics & progress"""
+  studentStats(studentId: String!): StudentStatsModel!
+
   """Get subject detail with modules"""
   subjectDetail(subjectId: String!): SubjectDetailModel!
 
+  """Get progress for a specific subject"""
+  subjectProgress(studentId: String!, subjectId: String!): SubjectProgressModel!
+
   """Get subjects for a classroom"""
   subjects(classroomId: String!): [SubjectModel!]!
+
+  """Get submission context for redirect (Teacher/Student)"""
+  submission(id: String!): SubmissionContextModel
 
   """Get submission detail"""
   submissionDetail(submissionId: String!): SubmissionDetailModel!
@@ -735,8 +788,23 @@ type StudentModel {
   id: ID!
   level: Float!
   totalXP: Float!
-  user: UserModel!
+  user: UserBasicModel!
   userId: String!
+}
+
+type StudentStatsModel {
+  averageScore: Float!
+  currentXP: Int!
+  level: Int!
+  levelProgress: Float!
+  studentId: ID!
+  studentName: String!
+  subjectProgress: [SubjectProgressModel!]!
+  totalAssignmentsCompleted: Int!
+  totalQuizzesCompleted: Int!
+  totalTasksCompleted: Int!
+  totalXP: Int!
+  xpToNextLevel: Int!
 }
 
 type StudentWithUser {
@@ -779,6 +847,16 @@ type SubjectModel {
   updatedAt: DateTime!
 }
 
+type SubjectProgressModel {
+  completedLessons: Int!
+  completionPercentage: Float!
+  subjectColor: String
+  subjectIcon: String
+  subjectId: ID!
+  subjectName: String!
+  totalLessons: Int!
+}
+
 type SubjectResultModel {
   message: String!
   success: Boolean!
@@ -793,6 +871,31 @@ type SubjectSummaryModel {
   moduleCount: Int!
   name: String!
   order: Int!
+}
+
+type SubmissionContextAssignmentModel {
+  id: String!
+  lesson: SubmissionContextLessonModel!
+}
+
+type SubmissionContextLessonModel {
+  id: String!
+  module: SubmissionContextModuleModel!
+}
+
+type SubmissionContextModel {
+  assignment: SubmissionContextAssignmentModel!
+  id: String!
+}
+
+type SubmissionContextModuleModel {
+  id: String!
+  subject: SubmissionContextSubjectModel!
+}
+
+type SubmissionContextSubjectModel {
+  classroomId: String!
+  id: String!
 }
 
 type SubmissionDetailModel {
@@ -813,10 +916,12 @@ type SubmissionDetailModel {
 }
 
 type SubmissionModel {
+  assignment: AssignmentBasicModel
   assignmentId: String!
   createdAt: DateTime!
   gradedAt: DateTime
   id: ID!
+  pendingStepsCount: Int
   score: Float
   status: SubmissionStatus!
   student: StudentInfoModel
@@ -943,8 +1048,20 @@ input UpdateTaskStepInput {
   stepNumber: Int
 }
 
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
+
+type UserBasicModel {
+  avatar: String
+  email: String!
+  id: ID!
+  parentName: String
+  studentName: String
+}
+
 type UserModel {
   avatar: String
+  children: [StudentModel!]
   createdAt: DateTime!
   email: String!
   id: ID!
@@ -954,6 +1071,7 @@ type UserModel {
   parentName: String
   role: UserRole!
   studentName: String
+  studentProfile: StudentModel
   teacherName: String
   updatedAt: DateTime!
 }

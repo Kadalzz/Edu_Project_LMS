@@ -1,9 +1,19 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.mjs';
 
 async function bootstrap() {
+  // For development: bypass SSL verification for R2
+  if (process.env.NODE_ENV === 'development') {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+    console.log('⚠️  SSL verification disabled for development');
+  }
+
   const app = await NestFactory.create(AppModule);
+  
+  // Enable GraphQL file upload (before any other middleware)
+  app.use(graphqlUploadExpress({ maxFileSize: 25 * 1024 * 1024, maxFiles: 10 }));
   
   // Enable CORS
   app.enableCors({
