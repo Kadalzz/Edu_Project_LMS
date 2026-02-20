@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/auth-store';
 import { Navbar } from '@/components/layout/navbar';
@@ -14,6 +14,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const { user, accessToken, fetchMe } = useAuthStore();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!accessToken) {
@@ -39,10 +40,10 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
+      <Navbar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
       <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6 lg:p-8 ml-0 lg:ml-64">
+        <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 ml-0 lg:ml-64">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>

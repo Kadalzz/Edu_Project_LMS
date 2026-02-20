@@ -4,12 +4,15 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore, ViewMode } from '@/lib/auth-store';
 import { Button } from '@/components/ui/button';
 import { LogOut, User, BookOpen, Menu } from 'lucide-react';
-import { useState } from 'react';
 
-export function Navbar() {
+interface NavbarProps {
+  mobileMenuOpen?: boolean;
+  setMobileMenuOpen?: (open: boolean) => void;
+}
+
+export function Navbar({ mobileMenuOpen = false, setMobileMenuOpen }: NavbarProps = {}) {
   const router = useRouter();
   const { user, viewMode, setViewMode, logout } = useAuthStore();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -34,7 +37,7 @@ export function Navbar() {
         {/* Left: Logo & Menu Toggle */}
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            onClick={() => setMobileMenuOpen?.(!mobileMenuOpen)}
             className="lg:hidden p-2 rounded-md hover:bg-gray-100"
           >
             <Menu className="h-5 w-5" />
@@ -102,7 +105,7 @@ export function Navbar() {
           <p className="text-xs font-medium text-muted-foreground mb-2">Ganti Mode:</p>
           <div className="flex gap-2">
             <button
-              onClick={() => { setViewMode('student'); setMobileMenuOpen(false); }}
+              onClick={() => { setViewMode('student'); setMobileMenuOpen?.(false); }}
               className={`flex-1 px-3 py-2 rounded-md text-sm font-medium ${
                 viewMode === 'student'
                   ? 'bg-primary text-white'
@@ -112,7 +115,7 @@ export function Navbar() {
               Mode Siswa
             </button>
             <button
-              onClick={() => { setViewMode('parent'); setMobileMenuOpen(false); }}
+              onClick={() => { setViewMode('parent'); setMobileMenuOpen?.(false); }}
               className={`flex-1 px-3 py-2 rounded-md text-sm font-medium ${
                 viewMode === 'parent'
                   ? 'bg-primary text-white'

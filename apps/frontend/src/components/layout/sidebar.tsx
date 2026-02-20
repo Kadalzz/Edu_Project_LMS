@@ -15,12 +15,18 @@ import {
   GraduationCap,
   Star,
   MessageSquare,
+  X,
 } from 'lucide-react';
 
 interface NavItem {
   label: string;
   href: string;
   icon: React.ElementType;
+}
+
+interface SidebarProps {
+  mobileMenuOpen?: boolean;
+  setMobileMenuOpen?: (open: boolean) => void;
 }
 
 const teacherNavItems: NavItem[] = [
@@ -56,7 +62,7 @@ const parentNavItems: NavItem[] = [
   // { label: 'Catatan', href: '/dashboard/notes', icon: MessageSquare },
 ];
 
-export function Sidebar() {
+export function Sidebar({ mobileMenuOpen = false, setMobileMenuOpen }: SidebarProps = {}) {
   const pathname = usePathname();
   const { user, viewMode } = useAuthStore();
 
@@ -69,8 +75,8 @@ export function Sidebar() {
     navItems = studentNavItems;
   }
 
-  return (
-    <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:top-16 bg-white border-r">
+  const NavContent = () => (
+    <>
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
@@ -80,6 +86,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => setMobileMenuOpen?.(false)}
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors',
                 isActive
@@ -108,6 +115,42 @@ export function Sidebar() {
           </div>
         </div>
       )}
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:top-16 bg-white border-r">
+        <NavContent />
+      </aside>
+
+      {/* Mobile Sidebar Overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setMobileMenuOpen?.(false)}
+        >
+          <aside
+            className="fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Mobile header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="font-semibold text-gray-900">Menu</h2>
+              <button
+                onClick={() => setMobileMenuOpen?.(false)}
+                className="p-2 rounded-md hover:bg-gray-100"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <NavContent />
+          </aside>
+        </div>
+      )}
+    </>
   );
 }
+
+

@@ -74,9 +74,9 @@ export function StudentDashboard() {
   }
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">
+    <div className="section-spacing">
+      <div>
+        <h1>
           Halo, {user?.studentName || 'Siswa'}! 🌟
         </h1>
         <p className="text-muted-foreground mt-1">
@@ -85,7 +85,7 @@ export function StudentDashboard() {
       </div>
 
       {/* XP & Level Card */}
-      <div className="bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 rounded-2xl p-6 mb-8 text-white">
+      <div className="bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 rounded-2xl p-6 text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <LevelBadge level={studentStats?.level || 1} size="lg" className="shadow-xl" />
@@ -116,7 +116,7 @@ export function StudentDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-3xl font-bold text-blue-600">{studentStats?.totalAssignmentsCompleted || 0}</p>
@@ -138,7 +138,7 @@ export function StudentDashboard() {
       </div>
 
       {/* Recent Grades */}
-      <Card className="mb-8">
+      <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <CheckCircle2 className="h-5 w-5 text-green-500" />
@@ -203,9 +203,9 @@ export function StudentDashboard() {
 
       {/* Subject Progress */}
       {studentStats?.subjectProgress && studentStats.subjectProgress.length > 0 && (
-        <Card className="mb-8">
+        <Card>
           <CardContent className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Progress per Mata Pelajaran</h3>
+            <h3 className="mb-4">Progress per Mata Pelajaran</h3>
             <div className="space-y-4">
               {studentStats.subjectProgress.map((subject: any) => (
                 <SubjectProgressBar
@@ -223,7 +223,7 @@ export function StudentDashboard() {
       )}
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <QuickActionCard
           title="Pelajaran"
           description="Mulai belajar materi baru"

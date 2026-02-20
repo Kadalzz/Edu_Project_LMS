@@ -462,7 +462,7 @@ type Mutation {
   deleteModule(moduleId: String!): ModuleResultModel!
 
   """Delete a note"""
-  deleteNote(noteId: String!): NoteModel!
+  deleteNote(noteId: String!): NoteResultModel!
 
   """Delete quiz question (Teacher)"""
   deleteQuizQuestion(questionId: String!): ResultModel!
@@ -561,6 +561,11 @@ type NoteModel {
   updatedAt: DateTime!
   writtenBy: NoteAuthorModel!
   writtenById: String!
+}
+
+type NoteResultModel {
+  message: String!
+  success: Boolean!
 }
 
 type NoteWithRepliesModel {

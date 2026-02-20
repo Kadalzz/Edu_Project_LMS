@@ -32,6 +32,67 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  
+  /* Typography improvements */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+  
+  h1 {
+    @apply text-3xl sm:text-4xl;
+  }
+  
+  h2 {
+    @apply text-2xl sm:text-3xl;
+  }
+  
+  h3 {
+    @apply text-xl sm:text-2xl;
+  }
+  
+  h4 {
+    @apply text-lg sm:text-xl;
   }
 }
+
+@layer components {
+  /* Card improvements */
+  .card {
+    @apply rounded-lg border bg-card text-card-foreground shadow-sm;
+  }
+  
+  /* Consistent spacing */
+  .section-spacing {
+    @apply space-y-4 sm:space-y-6;
+  }
+  
+  /* Form group spacing */
+  .form-group {
+    @apply space-y-2;
+  }
+  
+  /* Button group spacing */
+  .button-group {
+    @apply flex gap-2 flex-wrap;
+  }
+  
+  /* Grid responsive */
+  .grid-responsive {
+    @apply grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+  }
+}
+
+@layer utilities {
+  /* Text balance for headings */
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  /* Smooth scrolling */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+}
+

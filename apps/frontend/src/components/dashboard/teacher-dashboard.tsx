@@ -45,9 +45,9 @@ export function TeacherDashboard() {
   const activeStudents = students.filter((s: any) => s.user.isActive).length;
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">
+    <div className="section-spacing">
+      <div>
+        <h1>
           Selamat datang, {user?.teacherName || 'Guru'}! 👋
         </h1>
         <p className="text-muted-foreground mt-1">
@@ -56,7 +56,7 @@ export function TeacherDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <StatsCard
           title="Total Siswa"
           value={studentsLoading ? '...' : String(students.length)}
@@ -88,7 +88,7 @@ export function TeacherDashboard() {
       </div>
 
       {/* Pending Grading Queue */}
-      <Card className="mb-8">
+      <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -168,7 +168,7 @@ export function TeacherDashboard() {
       </Card>
 
       {/* Recent Notes from Parents */}
-      <Card className="mb-8">
+      <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">

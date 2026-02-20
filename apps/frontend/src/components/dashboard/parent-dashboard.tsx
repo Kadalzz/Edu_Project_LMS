@@ -88,9 +88,9 @@ export function ParentDashboard() {
   }
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">
+    <div className="section-spacing">
+      <div>
+        <h1>
           Dashboard Orang Tua 👨‍👩‍👧
         </h1>
         <p className="text-muted-foreground mt-1">
@@ -100,7 +100,7 @@ export function ParentDashboard() {
 
       {/* Child Selector (if multiple children) */}
       {children.length > 1 && (
-        <Card className="mb-6">
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-4">
               <span className="text-sm font-medium">Pilih Anak:</span>
@@ -123,7 +123,7 @@ export function ParentDashboard() {
 
       {/* Current Child Header */}
       {currentChild && (
-        <Card className="mb-6 bg-gradient-to-r from-blue-500 to-cyan-500 text-white">
+        <Card className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <LevelBadge level={currentChild.level} size="lg" className="shadow-xl" />
@@ -151,7 +151,7 @@ export function ParentDashboard() {
       ) : childStats ? (
         <>
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">

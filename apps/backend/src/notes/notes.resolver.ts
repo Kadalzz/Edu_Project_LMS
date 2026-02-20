@@ -4,7 +4,7 @@ import { NotesService } from './notes.service';
 import { GqlAuthGuard } from '../auth/guards/gql-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { CreateNoteInput, UpdateNoteInput } from './dto/note.input';
-import { NoteModel, NoteWithRepliesModel } from './models/note.model';
+import { NoteModel, NoteWithRepliesModel, NoteResultModel } from './models/note.model';
 
 @Resolver()
 export class NotesResolver {
@@ -28,12 +28,12 @@ export class NotesResolver {
     return this.notesService.updateNote(input, user.id);
   }
 
-  @Mutation(() => NoteModel, { description: 'Delete a note' })
+  @Mutation(() => NoteResultModel, { description: 'Delete a note' })
   @UseGuards(GqlAuthGuard)
   async deleteNote(
     @CurrentUser() user: { id: string },
     @Args('noteId') noteId: string,
-  ) {
+  ): Promise<NoteResultModel> {
     return this.notesService.deleteNote(noteId, user.id);
   }
 

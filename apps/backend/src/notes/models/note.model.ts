@@ -14,6 +14,15 @@ export class StudentBasicModel {
 }
 
 @ObjectType()
+export class NoteResultModel {
+  @Field()
+  success: boolean;
+
+  @Field()
+  message: string;
+}
+
+@ObjectType()
 export class NoteAuthorModel {
   @Field(() => ID)
   id: string;
