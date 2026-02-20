@@ -229,7 +229,7 @@ export class AssignmentsService {
 
   // Student view - no correct answers exposed
   async getAssignmentForStudent(assignmentId: string, studentUserId: string) {
-    const assignment = await this.prisma.assignment.findUnique({
+    const assignment = await this.prisma.assignment.findFirst({
       where: { id: assignmentId, isDraft: false, isActive: true },
       include: {
         quizQuestions: {
@@ -466,7 +466,7 @@ export class AssignmentsService {
   // ============================================
 
   async startSubmission(assignmentId: string, studentUserId: string) {
-    const assignment = await this.prisma.assignment.findUnique({
+    const assignment = await this.prisma.assignment.findFirst({
       where: { id: assignmentId, isDraft: false, isActive: true },
     });
     if (!assignment) {
