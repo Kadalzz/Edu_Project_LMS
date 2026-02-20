@@ -54,4 +54,13 @@ export class NotesResolver {
   ): Promise<NoteWithRepliesModel> {
     return this.notesService.getNoteDetail(noteId, user.id);
   }
+
+  @Query(() => [NoteModel], { description: 'Get recent notes for teacher from all their students' })
+  @UseGuards(GqlAuthGuard)
+  async recentNotesForTeacher(
+    @CurrentUser() user: { id: string },
+    @Args('limit', { nullable: true, defaultValue: 10 }) limit?: number,
+  ): Promise<any[]> {
+    return this.notesService.getRecentNotesForTeacher(user.id, limit);
+  }
 }

@@ -16,6 +16,9 @@ export class UserBasicModel {
 
   @Field({ nullable: true })
   avatar?: string;
+
+  @Field()
+  isActive: boolean;
 }
 
 @ObjectType()
@@ -25,6 +28,9 @@ export class StudentModel {
 
   @Field()
   userId: string;
+
+  @Field(() => ID, { nullable: true })
+  parentId?: string;
 
   @Field(() => UserBasicModel)
   user: UserBasicModel;

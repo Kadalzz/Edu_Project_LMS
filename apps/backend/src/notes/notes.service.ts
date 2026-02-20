@@ -167,6 +167,59 @@ export class NotesService {
     return notes.map((note) => this.mapNoteWithReplies(note));
   }
 
+  async getRecentNotesForTeacher(teacherId: string, limit: number = 10) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: teacherId },
+    });
+
+    if (!user || user.role !== 'TEACHER') {
+      throw new ForbiddenException('Hanya guru yang dapat mengakses fitur ini');
+    }
+
+    // Get all students in classrooms taught by this teacher
+    const enrollments = await this.prisma.classroomStudent.findMany({
+      where: {
+        classroom: {
+          teachers: {
+            some: { teacherId },
+          },
+        },
+      },
+      select: { studentId: true },
+    });
+
+    const studentIds = enrollments.map((e) => e.studentId);
+
+    if (studentIds.length === 0) {
+      return [];
+    }
+
+    // Get recent notes from these students
+    const notes = await this.prisma.note.findMany({
+      where: {
+        studentId: { in: studentIds },
+        parentNoteId: null, // Only top-level notes
+      },
+      include: {
+        writtenBy: true,
+        student: {
+          include: { user: true },
+        },
+        _count: { select: { replies: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+
+    return notes.map((note) => ({
+      ...this.mapNote(note),
+      student: {
+        id: note.student.id,
+        name: note.student.user.studentName || 'Siswa',
+      },
+    }));
+  }
+
   async getNoteDetail(noteId: string, userId: string) {
     const note = await this.prisma.note.findUnique({
       where: { id: noteId },

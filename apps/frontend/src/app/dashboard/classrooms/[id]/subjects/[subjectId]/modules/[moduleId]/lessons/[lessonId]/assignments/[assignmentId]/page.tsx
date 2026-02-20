@@ -13,6 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { FileUpload } from '@/components/ui/file-upload';
 import {
   ArrowLeft,
   Loader2,
@@ -29,6 +31,9 @@ import {
   Star,
   GripVertical,
   ImageIcon,
+  Edit,
+  X,
+  Calendar,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Breadcrumbs } from '@/components/ui/breadcrumbs';
@@ -784,24 +789,40 @@ function TaskSubmitter({
                 </div>
 
                 {!submittedSteps.has(step.id) && (
-                  <div className="space-y-2">
-                    <div className="space-y-1">
-                      <Label className="text-xs">URL Foto Bukti *</Label>
-                      <Input
-                        value={stepPhotos[step.id] || ''}
-                        onChange={(e) => setStepPhotos({ ...stepPhotos, [step.id]: e.target.value })}
-                        placeholder="URL foto bukti pengerjaan"
-                        className="text-sm"
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Foto Bukti *</Label>
+                      <FileUpload
+                        mediaType="IMAGE"
+                        folder="submissions/photos"
+                        onUploadComplete={(mediaId, url) => {
+                          setStepPhotos({ ...stepPhotos, [step.id]: url });
+                        }}
+                        maxSize={5}
                       />
+                      {stepPhotos[step.id] && (
+                        <div className="text-xs text-green-600 flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Foto berhasil diupload
+                        </div>
+                      )}
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">URL Video (opsional)</Label>
-                      <Input
-                        value={stepVideos[step.id] || ''}
-                        onChange={(e) => setStepVideos({ ...stepVideos, [step.id]: e.target.value })}
-                        placeholder="URL video bukti (opsional)"
-                        className="text-sm"
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Video (opsional)</Label>
+                      <FileUpload
+                        mediaType="VIDEO"
+                        folder="submissions/videos"
+                        onUploadComplete={(mediaId, url) => {
+                          setStepVideos({ ...stepVideos, [step.id]: url });
+                        }}
+                        maxSize={20}
                       />
+                      {stepVideos[step.id] && (
+                        <div className="text-xs text-green-600 flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Video berhasil diupload
+                        </div>
+                      )}
                     </div>
                     <Button
                       size="sm"
@@ -956,6 +977,15 @@ export default function AssignmentDetailPage() {
 
   const isTeacher = user?.role === 'TEACHER';
 
+  // Edit form state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    description: '',
+    dueDate: '',
+    xpReward: 0,
+  });
+
   // Teacher view: uses assignmentDetail (with correct answers)
   // Student view: uses assignmentForStudent (no answers)
   const { data, isLoading, error } = useQuery({
@@ -987,8 +1017,41 @@ export default function AssignmentDetailPage() {
     },
   });
 
+  const updateAssignmentMutation = useMutation({
+    mutationFn: (input: any) =>
+      graphqlRequest(ASSIGNMENT_MUTATIONS.UPDATE, { input }, { token: accessToken }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assignment', assignmentId] });
+      queryClient.invalidateQueries({ queryKey: ['assignments', lessonId] });
+      setIsEditing(false);
+    },
+  });
+
+  // Populate edit form when assignment loads
+  const handleStartEdit = () => {
+    if (assignment) {
+      setEditForm({
+        title: assignment.title || '',
+        description: assignment.description || '',
+        dueDate: assignment.dueDate ? new Date(assignment.dueDate).toISOString().split('T')[0] : '',
+        xpReward: assignment.xpReward || 0,
+      });
+      setIsEditing(true);
+    }
+  };
+
+  const handleSaveEdit = () => {
+    updateAssignmentMutation.mutate({
+      id: assignmentId,
+      title: editForm.title,
+      description: editForm.description,
+      dueDate: editForm.dueDate || undefined,
+      xpReward: editForm.xpReward,
+    });
+  };
+
   const basePath = `/dashboard/classrooms/${classroomId}/subjects/${subjectId}/modules/${moduleId}/lessons/${lessonId}`;
-  const backUrl = `${basePath}/assignments`;
+  const backUrl = isTeacher ? `${basePath}/assignments` : '/dashboard/assignments';
 
   if (isLoading) {
     return (
@@ -1010,17 +1073,25 @@ export default function AssignmentDetailPage() {
         </Link>
       </div>
     );
-  }
+  } 
 
-  return (
-    <div>
-      <Breadcrumbs items={[
+  // Different breadcrumbs for student and teacher
+  const breadcrumbItems = isTeacher
+    ? [
         { label: 'Kelas', href: '/dashboard/classrooms' },
         { label: 'Detail Kelas', href: `/dashboard/classrooms/${classroomId}` },
         { label: 'Modul', href: `${basePath.split('/lessons')[0]}` },
         { label: 'Materi', href: basePath },
         { label: assignment.title }
-      ]} />
+      ]
+    : [
+        { label: 'Tugas', href: '/dashboard/assignments' },
+        { label: assignment.title }
+      ];
+
+  return (
+    <div>
+      <Breadcrumbs items={breadcrumbItems} />
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
@@ -1046,6 +1117,15 @@ export default function AssignmentDetailPage() {
         </div>
         {isTeacher && (
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleStartEdit}
+              disabled={isEditing}
+            >
+              <Edit className="h-4 w-4 mr-1.5" />
+              Edit
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -1080,6 +1160,83 @@ export default function AssignmentDetailPage() {
           </span>
         )}
       </div>
+
+      {/* Edit Assignment Form */}
+      {isEditing && isTeacher && (
+        <Card className="mb-6 border-blue-200 bg-blue-50/50">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Edit Assignment</CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditing(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">Title</label>
+              <Input
+                value={editForm.title}
+                onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                placeholder="Assignment title"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">Description</label>
+              <Textarea
+                value={editForm.description}
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                placeholder="Assignment description"
+                rows={4}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-1.5 flex items-center gap-1">
+                  <Calendar className="h-4 w-4" />
+                  Due Date
+                </label>
+                <Input
+                  type="date"
+                  value={editForm.dueDate}
+                  onChange={(e) => setEditForm({ ...editForm, dueDate: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1.5 flex items-center gap-1">
+                  <Star className="h-4 w-4" />
+                  XP Reward
+                </label>
+                <Input
+                  type="number"
+                  value={editForm.xpReward}
+                  onChange={(e) => setEditForm({ ...editForm, xpReward: parseInt(e.target.value) || 0 })}
+                  min="0"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button
+                onClick={handleSaveEdit}
+                disabled={updateAssignmentMutation.isPending || !editForm.title.trim()}
+              >
+                {updateAssignmentMutation.isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsEditing(false)}
+                disabled={updateAssignmentMutation.isPending}
+              >
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* TEACHER VIEW */}
       {isTeacher && (

@@ -24,10 +24,12 @@ input AddTaskStepInput {
 }
 
 type AssignmentBasicModel {
+  dueDate: DateTime
   id: ID!
   lessonId: String!
   title: String!
   type: AssignmentType!
+  xpReward: Int!
 }
 
 type AssignmentDetailModel {
@@ -57,7 +59,9 @@ type AssignmentModel {
   isDraft: Boolean!
   lessonId: String!
   questionCount: Int!
+  quizQuestions: [QuizQuestionModel!]
   submissionCount: Int!
+  taskSteps: [TaskStepModel!]
   title: String!
   type: AssignmentType!
   updatedAt: DateTime!
@@ -552,6 +556,7 @@ type NoteModel {
   id: ID!
   parentNoteId: String
   replyCount: Int!
+  student: StudentBasicModel
   studentId: String!
   updatedAt: DateTime!
   writtenBy: NoteAuthorModel!
@@ -650,6 +655,9 @@ type Query {
 
   """Get recent graded submissions (Student)"""
   recentGrades(limit: Float): [SubmissionModel!]!
+
+  """Get recent notes for teacher from all their students"""
+  recentNotesForTeacher(limit: Float = 10): [NoteModel!]!
 
   """Get student statistics & progress"""
   studentStats(studentId: String!): StudentStatsModel!
@@ -774,6 +782,11 @@ enum StepSubmissionStatus {
   REJECTED
 }
 
+type StudentBasicModel {
+  id: ID!
+  name: String!
+}
+
 type StudentInfoModel {
   id: ID!
   level: Int!
@@ -787,6 +800,7 @@ type StudentModel {
   currentXP: Float!
   id: ID!
   level: Float!
+  parentId: ID
   totalXP: Float!
   user: UserBasicModel!
   userId: String!
@@ -886,6 +900,7 @@ type SubmissionContextLessonModel {
 type SubmissionContextModel {
   assignment: SubmissionContextAssignmentModel!
   id: String!
+  status: String!
 }
 
 type SubmissionContextModuleModel {
@@ -1055,6 +1070,7 @@ type UserBasicModel {
   avatar: String
   email: String!
   id: ID!
+  isActive: Boolean!
   parentName: String
   studentName: String
 }

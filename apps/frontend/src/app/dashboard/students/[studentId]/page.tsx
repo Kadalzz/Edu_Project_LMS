@@ -64,12 +64,22 @@ export default function StudentDetailPage() {
     enabled: !!accessToken && !!studentId,
   });
 
+  // Debug: Log notes data
+  console.log('📝 Notes Data:', notes);
+  console.log('📝 Notes Array:', notes?.notesByStudent);
+  console.log('📝 Notes Count:', notes?.notesByStudent?.length);
+
   // Fetch daily reports
   const { data: reports, isLoading: reportsLoading } = useQuery({
     queryKey: ['dailyReports', studentId],
     queryFn: () => graphqlRequest(DAILY_REPORT_QUERIES.BY_STUDENT, { studentId }, { token: accessToken }),
     enabled: !!accessToken && !!studentId,
   });
+
+  // Debug: Log reports data
+  console.log('📊 Daily Reports Data:', reports);
+  console.log('📊 Daily Reports Array:', reports?.dailyReportsByStudent);
+  console.log('📊 Daily Reports Count:', reports?.dailyReportsByStudent?.length);
 
   // Fetch student stats
   const { data: statsData, isLoading: statsLoading } = useQuery({
@@ -113,6 +123,11 @@ export default function StudentDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['dailyReports', studentId] });
       setCommentContent('');
       setCommentTo(null);
+      console.log('Comment added successfully');
+    },
+    onError: (error: any) => {
+      console.error('Error adding comment:', error);
+      alert('Gagal menambahkan komentar: ' + (error?.message || 'Unknown error'));
     },
   });
 
@@ -142,7 +157,11 @@ export default function StudentDetailPage() {
   };
 
   const handleAddComment = (reportId: string) => {
-    if (!commentContent.trim()) return;
+    if (!commentContent.trim()) {
+      alert('Komentar tidak boleh kosong');
+      return;
+    }
+    console.log('Adding comment:', { reportId, content: commentContent });
     addCommentMutation.mutate({
       reportId,
       content: commentContent,

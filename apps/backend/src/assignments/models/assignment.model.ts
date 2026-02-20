@@ -168,6 +168,12 @@ export class AssignmentBasicModel {
 
   @Field()
   lessonId: string;
+
+  @Field({ nullable: true })
+  dueDate?: Date;
+
+  @Field(() => Int)
+  xpReward: number;
 }
 
 @ObjectType()
@@ -198,6 +204,12 @@ export class AssignmentModel {
 
   @Field()
   isActive: boolean;
+
+  @Field(() => [QuizQuestionModel], { nullable: true })
+  quizQuestions?: QuizQuestionModel[];
+
+  @Field(() => [TaskStepModel], { nullable: true })
+  taskSteps?: TaskStepModel[];
 
   @Field(() => Int)
   questionCount: number;
@@ -546,6 +558,9 @@ export class SubmissionContextAssignmentModel {
 export class SubmissionContextModel {
   @Field(() => String)
   id: string;
+
+  @Field(() => String)
+  status: string;
 
   @Field(() => SubmissionContextAssignmentModel)
   assignment: SubmissionContextAssignmentModel;

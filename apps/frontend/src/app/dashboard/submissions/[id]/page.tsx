@@ -10,6 +10,7 @@ const GET_SUBMISSION_CONTEXT = `
   query GetSubmissionContext($submissionId: String!) {
     submission(id: $submissionId) {
       id
+      status
       assignment {
         id
         lesson {
@@ -29,6 +30,7 @@ const GET_SUBMISSION_CONTEXT = `
 
 interface SubmissionContext {
   id: string;
+  status: string;
   assignment: {
     id: string;
     lesson: {
@@ -65,21 +67,27 @@ export default function SubmissionRedirectPage() {
 
   // Redirect to proper URL when data loaded
   if (data?.submission) {
-    const { assignment } = data.submission;
+    const { assignment, status } = data.submission;
     const classroomId = assignment.lesson.module.subject.classroomId;
     const subjectId = assignment.lesson.module.subject.id;
     const moduleId = assignment.lesson.module.id;
     const lessonId = assignment.lesson.id;
     const assignmentId = assignment.id;
 
-    const fullPath = `/dashboard/classrooms/${classroomId}/subjects/${subjectId}/modules/${moduleId}/lessons/${lessonId}/assignments/${assignmentId}/submissions/${submissionId}`;
+    // If DRAFT (not started yet), redirect to assignment page to work on it
+    // Otherwise, redirect to submission detail page to view results
+    const targetPath = status === 'DRAFT'
+      ? `/dashboard/classrooms/${classroomId}/subjects/${subjectId}/modules/${moduleId}/lessons/${lessonId}/assignments/${assignmentId}`
+      : `/dashboard/classrooms/${classroomId}/subjects/${subjectId}/modules/${moduleId}/lessons/${lessonId}/assignments/${assignmentId}/submissions/${submissionId}`;
 
-    router.replace(fullPath);
+    router.replace(targetPath);
     
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="ml-3 text-muted-foreground">Redirecting to submission...</p>
+        <p className="ml-3 text-muted-foreground">
+          {status === 'DRAFT' ? 'Memuat tugas...' : 'Memuat submission...'}
+        </p>
       </div>
     );
   }

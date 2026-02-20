@@ -26,6 +26,7 @@ import {
   Image as ImageIcon,
   Video,
   MessageSquare,
+  RefreshCw,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Breadcrumbs } from '@/components/ui/breadcrumbs';
@@ -47,11 +48,16 @@ export default function SubmissionDetailPage() {
   const [gradeScore, setGradeScore] = useState('');
   const [gradeFeedback, setGradeFeedback] = useState('');
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['submissionDetail', submissionId],
     queryFn: () =>
       graphqlRequest(ASSIGNMENT_QUERIES.SUBMISSION_DETAIL, { submissionId }, { token: accessToken }),
     enabled: !!accessToken && !!submissionId,
+    // Auto-refresh every 30 seconds if not yet graded (teacher waiting for submission)
+    refetchInterval: (data) => {
+      const submission = data?.submissionDetail;
+      return submission?.status !== 'GRADED' ? 30000 : false;
+    },
   });
 
   const submission = data?.submissionDetail;
@@ -92,7 +98,7 @@ export default function SubmissionDetailPage() {
   };
 
   const basePath = `/dashboard/classrooms/${classroomId}/subjects/${subjectId}/modules/${moduleId}/lessons/${lessonId}/assignments/${assignmentId}`;
-  const backUrl = basePath;
+  const backUrl = isTeacher ? basePath : '/dashboard/assignments';
 
   if (isLoading) {
     return (
@@ -118,16 +124,24 @@ export default function SubmissionDetailPage() {
 
   const isQuiz = submission.assignment?.type === 'QUIZ';
 
-  return (
-    <div>
-      <Breadcrumbs items={[
+  // Different breadcrumbs for student and teacher
+  const breadcrumbItems = isTeacher 
+    ? [
         { label: 'Kelas', href: '/dashboard/classrooms' },
         { label: 'Detail Kelas', href: `/dashboard/classrooms/${classroomId}` },
         { label: 'Modul', href: `/dashboard/classrooms/${classroomId}/subjects/${subjectId}/modules/${moduleId}` },
         { label: 'Materi', href: `/dashboard/classrooms/${classroomId}/subjects/${subjectId}/modules/${moduleId}/lessons/${lessonId}` },
         { label: submission.assignment?.title || 'Tugas', href: basePath },
         { label: `Submission - ${submission.student?.studentName || 'Siswa'}` }
-      ]} />
+      ]
+    : [
+        { label: 'Tugas', href: '/dashboard/assignments' },
+        { label: submission.assignment?.title || 'Detail Tugas' }
+      ];
+
+  return (
+    <div>
+      <Breadcrumbs items={breadcrumbItems} />
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
@@ -144,15 +158,26 @@ export default function SubmissionDetailPage() {
             </p>
           </div>
         </div>
-        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-          submission.status === 'GRADED'
-            ? 'bg-green-100 text-green-700'
-            : submission.status === 'SUBMITTED'
-            ? 'bg-blue-100 text-blue-700'
-            : 'bg-gray-100 text-gray-600'
-        }`}>
-          {submission.status === 'GRADED' ? 'Dinilai' : submission.status === 'SUBMITTED' ? 'Dikumpulkan' : 'Draft'}
-        </span>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`h-4 w-4 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+            submission.status === 'GRADED'
+              ? 'bg-green-100 text-green-700'
+              : submission.status === 'SUBMITTED'
+              ? 'bg-blue-100 text-blue-700'
+              : 'bg-gray-100 text-gray-600'
+          }`}>
+            {submission.status === 'GRADED' ? 'Dinilai' : submission.status === 'SUBMITTED' ? 'Dikumpulkan' : 'Draft'}
+          </span>
+        </div>
       </div>
 
       {/* Student Info & Score */}
@@ -242,91 +267,141 @@ export default function SubmissionDetailPage() {
       )}
 
       {/* Task Step Submissions */}
-      {!isQuiz && submission.stepSubmissions && (
+      {!isQuiz && submission.assignment?.taskSteps && (
         <Card className="mb-6">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <ListChecks className="h-4 w-4" />
-              Langkah Task Analysis
+              Langkah Task Analysis ({submission.stepSubmissions?.length || 0}/{submission.assignment.taskSteps.length} dikerjakan)
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {submission.stepSubmissions.map((stepSub: any) => (
-              <div key={stepSub.id} className="p-4 rounded-lg border">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <p className="text-sm font-medium">
-                      Langkah {stepSub.step?.stepNumber}: {stepSub.step?.instruction}
-                    </p>
-                    <div className="flex items-center gap-3 mt-1">
-                      {stepSub.photoUrl && (
-                        <a href={stepSub.photoUrl} target="_blank" className="text-xs text-blue-600 hover:underline flex items-center gap-1">
-                          <ImageIcon className="h-3 w-3" /> Lihat foto
+            {submission.assignment.taskSteps.map((step: any) => {
+              const stepSub = submission.stepSubmissions?.find((s: any) => s.stepId === step.id);
+              const isSubmitted = !!stepSub;
+              
+              return (
+                <div key={step.id} className={`p-4 rounded-lg border ${
+                  isSubmitted
+                    ? stepSub.status === 'APPROVED'
+                      ? 'border-green-300 bg-green-50'
+                      : stepSub.status === 'REJECTED'
+                      ? 'border-red-300 bg-red-50'
+                      : 'border-yellow-300 bg-yellow-50'
+                    : 'border-gray-200 bg-gray-50'
+                }`}>
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-medium">
+                          Langkah {step.stepNumber}: {step.instruction}
+                        </span>
+                        {step.isMandatory && (
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-700">Wajib</span>
+                        )}
+                      </div>
+                      {step.referenceImage && (
+                        <a href={step.referenceImage} target="_blank" className="text-xs text-blue-600 hover:underline">
+                          🖼️ Lihat referensi
                         </a>
                       )}
-                      {stepSub.videoUrl && (
-                        <a href={stepSub.videoUrl} target="_blank" className="text-xs text-blue-600 hover:underline flex items-center gap-1">
-                          <Video className="h-3 w-3" /> Lihat video
-                        </a>
+                      
+                      {isSubmitted && (
+                        <div className="flex items-center gap-3 mt-2">
+                          {stepSub.photoUrl && (
+                            <a href={stepSub.photoUrl} target="_blank" className="text-xs text-blue-600 hover:underline flex items-center gap-1">
+                              <ImageIcon className="h-3 w-3" /> Foto bukti
+                            </a>
+                          )}
+                          {stepSub.videoUrl && (
+                            <a href={stepSub.videoUrl} target="_blank" className="text-xs text-blue-600 hover:underline flex items-center gap-1">
+                              <Video className="h-3 w-3" /> Video
+                            </a>
+                          )}
+                          {stepSub.submittedAt && (
+                            <span className="text-xs text-muted-foreground">
+                              ✓ {new Date(stepSub.submittedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      
+                      {!isSubmitted && submission.status === 'DRAFT' && (
+                        <p className="text-xs text-muted-foreground mt-1">Belum dikerjakan</p>
                       )}
                     </div>
+                    
+                    <span className={`text-xs px-2 py-1 rounded font-medium whitespace-nowrap ${
+                      !isSubmitted
+                        ? 'bg-gray-100 text-gray-600'
+                        : stepSub.status === 'APPROVED'
+                        ? 'bg-green-100 text-green-700'
+                        : stepSub.status === 'REJECTED'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {!isSubmitted ? 'Belum Submit' : stepSub.status === 'APPROVED' ? 'Disetujui' : stepSub.status === 'REJECTED' ? 'Ditolak' : 'Menunggu'}
+                    </span>
                   </div>
-                  <span className={`text-xs px-2 py-1 rounded font-medium ${
-                    stepSub.status === 'APPROVED'
-                      ? 'bg-green-100 text-green-700'
-                      : stepSub.status === 'REJECTED'
-                      ? 'bg-red-100 text-red-700'
-                      : 'bg-yellow-100 text-yellow-700'
-                  }`}>
-                    {stepSub.status === 'APPROVED' ? 'Disetujui' : stepSub.status === 'REJECTED' ? 'Ditolak' : 'Menunggu'}
-                  </span>
+
+                  {isSubmitted && stepSub.comment && isTeacher && (
+                    <div className="mt-2 p-2 bg-white rounded text-xs">
+                      <p className="font-medium text-gray-700 mb-1">Komentar Review:</p>
+                      <p className="text-gray-600">{stepSub.comment}</p>
+                    </div>
+                  )}
+
+                  {isTeacher && isSubmitted && stepSub.status === 'PENDING' && (
+                    <div className="mt-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs px-2 py-0.5 bg-blue-600 text-white rounded font-medium">
+                          🔒 Aksi Guru
+                        </span>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-green-600 border-green-600 hover:bg-green-50"
+                          onClick={() => handleReviewStep(stepSub.id, 'APPROVED')}
+                          disabled={reviewStepMutation.isPending}
+                        >
+                          ✓ Setujui
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 border-red-600 hover:bg-red-50"
+                          onClick={() => {
+                            const comment = prompt('Alasan penolakan (opsional):');
+                            handleReviewStep(stepSub.id, 'REJECTED', comment || undefined);
+                          }}
+                          disabled={reviewStepMutation.isPending}
+                        >
+                          ✗ Tolak
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-
-                {stepSub.comment && (
-                  <div className="mt-2 p-2 rounded bg-blue-50 text-sm text-blue-700 flex items-start gap-2">
-                    <MessageSquare className="h-4 w-4 shrink-0 mt-0.5" />
-                    {stepSub.comment}
-                  </div>
-                )}
-
-                {/* Teacher review actions */}
-                {isTeacher && stepSub.status === 'PENDING' && (
-                  <div className="flex items-center gap-2 mt-3">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-green-600 border-green-300 hover:bg-green-50"
-                      onClick={() => handleReviewStep(stepSub.id, 'APPROVED', 'Bagus!')}
-                      disabled={reviewStepMutation.isPending}
-                    >
-                      <CheckCircle2 className="h-4 w-4 mr-1" />
-                      Setuju
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-red-600 border-red-300 hover:bg-red-50"
-                      onClick={() => handleReviewStep(stepSub.id, 'REJECTED', 'Perlu diperbaiki')}
-                      disabled={reviewStepMutation.isPending}
-                    >
-                      <XCircle className="h-4 w-4 mr-1" />
-                      Tolak
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
       )}
 
       {/* Grading Form (Teacher) */}
       {isTeacher && submission.status !== 'DRAFT' && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">
-              {submission.status === 'GRADED' ? 'Update Penilaian' : 'Penilaian'}
-            </CardTitle>
+        <Card className="border-2 border-blue-500">
+          <CardHeader className="pb-3 bg-blue-50/50">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">
+                {submission.status === 'GRADED' ? 'Update Penilaian' : 'Penilaian'}
+              </CardTitle>
+              <span className="text-xs px-3 py-1 bg-blue-600 text-white rounded-full font-medium">
+                🔒 Khusus Guru
+              </span>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {submission.grading && (

@@ -36,9 +36,32 @@ export default function AssignmentsPage() {
   // Redirect if not student
   if (user?.role !== 'STUDENT_PARENT') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
+      <div className="flex flex-col items-center justify-center min-h-[400px] p-6">
         <FileText className="h-16 w-16 text-gray-300 mb-4" />
-        <p className="text-muted-foreground">Halaman ini hanya untuk siswa</p>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Halaman Tugas Siswa</h2>
+        <p className="text-muted-foreground text-center mb-6">
+          Halaman ini menampilkan daftar tugas untuk siswa.<br />
+          {user?.role === 'TEACHER' ? 'Sebagai guru, Anda dapat mengelola tugas melalui:' : 'Anda tidak memiliki akses ke halaman ini.'}
+        </p>
+        {user?.role === 'TEACHER' && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md">
+            <p className="text-sm text-blue-900 font-medium mb-2">📚 Cara Mengelola Tugas:</p>
+            <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+              <li>Buka menu <strong>Kelas</strong></li>
+              <li>Pilih kelas → <strong>Mata Pelajaran</strong></li>
+              <li>Pilih modul → <strong>Materi</strong></li>
+              <li>Di halaman materi, klik <strong>Tambah Tugas</strong></li>
+            </ol>
+            <div className="mt-4">
+              <Link 
+                href="/dashboard/classrooms" 
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
+              >
+                Ke Halaman Kelas →
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -55,14 +78,14 @@ export default function AssignmentsPage() {
   // Filter assignments by status
   const filteredAssignments = assignments.filter((assignment) => {
     if (selectedFilter === 'all') return true;
-    if (selectedFilter === 'pending') return assignment.status === 'PENDING' || assignment.status === 'IN_PROGRESS';
+    if (selectedFilter === 'pending') return assignment.status === 'DRAFT';
     if (selectedFilter === 'submitted') return assignment.status === 'SUBMITTED';
     if (selectedFilter === 'graded') return assignment.status === 'GRADED';
     return true;
   });
 
   // Count by status
-  const pendingCount = assignments.filter(a => a.status === 'PENDING' || a.status === 'IN_PROGRESS').length;
+  const pendingCount = assignments.filter(a => a.status === 'DRAFT').length;
   const submittedCount = assignments.filter(a => a.status === 'SUBMITTED').length;
   const gradedCount = assignments.filter(a => a.status === 'GRADED').length;
 
@@ -73,12 +96,12 @@ export default function AssignmentsPage() {
     if (status === 'SUBMITTED') {
       return <Badge className="bg-blue-100 text-blue-700 border-blue-300">📤 Terkirim</Badge>;
     }
-    if (status === 'IN_PROGRESS') {
-      return <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300">⏳ Sedang Dikerjakan</Badge>;
-    }
-    // Check if overdue
-    if (dueDate && isPast(new Date(dueDate))) {
-      return <Badge className="bg-red-100 text-red-700 border-red-300">⚠️ Terlambat</Badge>;
+    if (status === 'DRAFT') {
+      // Check if overdue
+      if (dueDate && isPast(new Date(dueDate))) {
+        return <Badge className="bg-red-100 text-red-700 border-red-300">⚠️ Terlambat</Badge>;
+      }
+      return <Badge className="bg-gray-100 text-gray-700 border-gray-300">📝 Belum Dikerjakan</Badge>;
     }
     return <Badge className="bg-gray-100 text-gray-700 border-gray-300">📝 Belum Dikerjakan</Badge>;
   };
@@ -190,77 +213,73 @@ export default function AssignmentsPage() {
 
           <div className="space-y-4">
             {filteredAssignments.map((assignment) => (
-              <Card key={assignment.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Badge variant="outline" className="text-xs">
-                          {assignment.assignment.type === 'QUIZ' ? '📝 Quiz' : '📋 Task'}
-                        </Badge>
-                        {getStatusBadge(assignment.status, assignment.assignment.dueDate)}
-                      </div>
+              <Link
+                key={assignment.id}
+                href={`/dashboard/submissions/${assignment.id}`}
+                className="block"
+              >
+                <Card className="hover:shadow-md transition-shadow cursor-pointer hover:border-primary/50">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Badge variant="outline" className="text-xs">
+                            {assignment.assignment.type === 'QUIZ' ? '📝 Quiz' : '📋 Task'}
+                          </Badge>
+                          {getStatusBadge(assignment.status, assignment.assignment.dueDate)}
+                        </div>
 
-                      <h3 className="font-semibold text-gray-900 mb-2">
-                        {assignment.assignment.title}
-                      </h3>
+                        <h3 className="font-semibold text-gray-900 mb-2">
+                          {assignment.assignment.title}
+                        </h3>
 
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        {assignment.assignment.dueDate && (
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          {assignment.assignment.dueDate && (
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              <span>
+                                Deadline: {formatDistanceToNow(new Date(assignment.assignment.dueDate), {
+                                  addSuffix: true,
+                                  locale: idLocale,
+                                })}
+                              </span>
+                              {isPast(new Date(assignment.assignment.dueDate)) && assignment.status !== 'GRADED' && (
+                                <AlertCircle className="h-3 w-3 text-red-500 ml-1" />
+                              )}
+                            </div>
+                          )}
                           <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            <span>
-                              Deadline: {formatDistanceToNow(new Date(assignment.assignment.dueDate), {
-                                addSuffix: true,
-                                locale: idLocale,
-                              })}
-                            </span>
-                            {isPast(new Date(assignment.assignment.dueDate)) && assignment.status !== 'GRADED' && (
-                              <AlertCircle className="h-3 w-3 text-red-500 ml-1" />
-                            )}
+                            <Award className="h-3 w-3" />
+                            <span>{assignment.assignment.xpReward} XP</span>
+                          </div>
+                        </div>
+
+                        {assignment.status === 'GRADED' && assignment.gradedAt && (
+                          <div className="mt-2 text-xs text-muted-foreground">
+                            Dinilai {formatDistanceToNow(new Date(assignment.gradedAt), {
+                              addSuffix: true,
+                              locale: idLocale,
+                            })}
                           </div>
                         )}
-                        <div className="flex items-center gap-1">
-                          <Award className="h-3 w-3" />
-                          <span>{assignment.assignment.xpReward} XP</span>
-                        </div>
                       </div>
 
-                      {assignment.status === 'GRADED' && assignment.gradedAt && (
-                        <div className="mt-2 text-xs text-muted-foreground">
-                          Dinilai {formatDistanceToNow(new Date(assignment.gradedAt), {
-                            addSuffix: true,
-                            locale: idLocale,
-                          })}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-4 ml-6">
-                      {assignment.status === 'GRADED' && assignment.score !== null ? (
-                        <div className="flex flex-col items-center">
-                          <div
-                            className={`text-3xl font-bold px-5 py-2 rounded-lg border-2 ${getScoreBadge(assignment.score)}`}
-                          >
-                            {assignment.score.toFixed(0)}
+                      <div className="flex items-center gap-4 ml-6">
+                        {assignment.status === 'GRADED' && assignment.score !== null && (
+                          <div className="flex flex-col items-center">
+                            <div
+                              className={`text-3xl font-bold px-5 py-2 rounded-lg border-2 ${getScoreBadge(assignment.score)}`}
+                            >
+                              {assignment.score.toFixed(0)}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">/ 100</div>
                           </div>
-                          <div className="text-xs text-muted-foreground mt-1">/ 100</div>
-                        </div>
-                      ) : (
-                        <Link
-                          href={`/dashboard/submissions/${assignment.id}`}
-                          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors text-sm font-medium"
-                        >
-                          {assignment.status === 'PENDING' ? 'Kerjakan' :
-                            assignment.status === 'IN_PROGRESS' ? 'Lanjutkan' :
-                              assignment.status === 'SUBMITTED' ? 'Lihat' :
-                                'Detail'}
-                        </Link>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
 
@@ -283,6 +302,3 @@ export default function AssignmentsPage() {
     </div>
   );
 }
-tml:function_calls>
-<invoke name="useAuthStore">
-<parameter name="component">@/lib/auth-store

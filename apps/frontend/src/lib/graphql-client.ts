@@ -278,6 +278,7 @@ export const CLASSROOM_QUERIES = {
               studentName
               parentName
               avatar
+              isActive
             }
           }
         }
@@ -1062,6 +1063,13 @@ export const ASSIGNMENT_QUERIES = {
           xpReward
           questionCount
           submissionCount
+          taskSteps {
+            id
+            stepNumber
+            instruction
+            referenceImage
+            isMandatory
+          }
         }
         createdAt
         updatedAt
@@ -1102,11 +1110,14 @@ export const ASSIGNMENT_QUERIES = {
         assignmentId
         status
         score
+        submittedAt
         gradedAt
         assignment {
           id
           title
           type
+          dueDate
+          xpReward
         }
       }
     }
@@ -1225,6 +1236,28 @@ export const NOTE_QUERIES = {
           createdAt
           updatedAt
         }
+        createdAt
+        updatedAt
+      }
+    }
+  `,
+  RECENT_FOR_TEACHER: `
+    query RecentNotesForTeacher($limit: Float) {
+      recentNotesForTeacher(limit: $limit) {
+        id
+        content
+        studentId
+        writtenById
+        writtenBy {
+          id
+          name
+          role
+        }
+        student {
+          id
+          name
+        }
+        replyCount
         createdAt
         updatedAt
       }

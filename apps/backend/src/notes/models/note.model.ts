@@ -5,6 +5,15 @@ import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
 // ============================================
 
 @ObjectType()
+export class StudentBasicModel {
+  @Field(() => ID)
+  id: string;
+
+  @Field()
+  name: string;
+}
+
+@ObjectType()
 export class NoteAuthorModel {
   @Field(() => ID)
   id: string;
@@ -32,6 +41,9 @@ export class NoteModel {
 
   @Field(() => NoteAuthorModel)
   writtenBy: NoteAuthorModel;
+
+  @Field(() => StudentBasicModel, { nullable: true })
+  student?: StudentBasicModel;
 
   @Field({ nullable: true })
   parentNoteId?: string;

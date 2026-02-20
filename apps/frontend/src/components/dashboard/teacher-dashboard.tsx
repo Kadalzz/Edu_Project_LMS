@@ -2,9 +2,9 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/lib/auth-store';
-import { graphqlRequest, USER_QUERIES, PROGRESS_QUERIES, ASSIGNMENT_QUERIES } from '@/lib/graphql-client';
+import { graphqlRequest, USER_QUERIES, PROGRESS_QUERIES, ASSIGNMENT_QUERIES, NOTE_QUERIES } from '@/lib/graphql-client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, GraduationCap, BookOpen, ClipboardList, Loader2, Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Users, GraduationCap, BookOpen, ClipboardList, Loader2, Clock, AlertCircle, CheckCircle2, MessageSquare } from 'lucide-react';
 import { LevelBadge } from './progress-components';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -32,9 +32,16 @@ export function TeacherDashboard() {
     enabled: !!accessToken,
   });
 
+  const { data: recentNotesData, isLoading: notesLoading } = useQuery({
+    queryKey: ['recentNotesForTeacher'],
+    queryFn: () => graphqlRequest(NOTE_QUERIES.RECENT_FOR_TEACHER, { limit: 5 }, { token: accessToken }),
+    enabled: !!accessToken,
+  });
+
   const students = studentsData?.myStudents || [];
   const classrooms = classroomsData?.myClassrooms || [];
   const pendingSubmissions = pendingData?.pendingGrading || [];
+  const recentNotes = recentNotesData?.recentNotesForTeacher || [];
   const activeStudents = students.filter((s: any) => s.user.isActive).length;
 
   return (
@@ -152,6 +159,79 @@ export function TeacherDashboard() {
                           : 'Baru saja'}
                       </div>
                     </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Recent Notes from Parents */}
+      <Card className="mb-8">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-blue-500" />
+              Catatan Terbaru dari Orang Tua
+            </CardTitle>
+            {recentNotes.length > 0 && (
+              <Badge variant="secondary">{recentNotes.length}</Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {notesLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : recentNotes.length === 0 ? (
+            <div className="text-center py-8">
+              <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-muted-foreground">Belum ada catatan dari orang tua</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Catatan dari orang tua akan muncul di sini
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {recentNotes.map((note: any) => (
+                <Link
+                  key={note.id}
+                  href={`/dashboard/students/${note.studentId}`}
+                  className="flex items-start gap-3 p-4 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors border border-blue-200"
+                >
+                  <div className="flex-shrink-0 mt-1">
+                    <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-semibold">
+                      {note.writtenBy.name.charAt(0).toUpperCase()}
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {note.writtenBy.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Tentang: <span className="font-medium">{note.student?.name || 'Siswa'}</span>
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground flex-shrink-0">
+                        <Clock className="h-3 w-3" />
+                        {formatDistanceToNow(new Date(note.createdAt), {
+                          addSuffix: true,
+                          locale: idLocale,
+                        })}
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                      {note.content}
+                    </p>
+                    {note.replyCount > 0 && (
+                      <Badge variant="outline" className="text-xs mt-2">
+                        {note.replyCount} balasan
+                      </Badge>
+                    )}
                   </div>
                 </Link>
               ))}

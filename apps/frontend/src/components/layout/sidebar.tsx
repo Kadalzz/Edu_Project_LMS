@@ -40,9 +40,8 @@ const teacherNavItems: NavItem[] = [
 
 const studentNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Kelas', href: '/dashboard/classrooms', icon: GraduationCap },
-  { label: 'Nilai', href: '/dashboard/grades', icon: BarChart3 },
   { label: 'Tugas', href: '/dashboard/assignments', icon: ClipboardList },
+  { label: 'Nilai', href: '/dashboard/grades', icon: BarChart3 },
   // TODO: Create these pages before re-enabling (see BUG-REPORT-DAY1-9.md)
   // { label: 'Pelajaran', href: '/dashboard/lessons', icon: BookOpen },
   // { label: 'XP & Level', href: '/dashboard/xp', icon: Star },

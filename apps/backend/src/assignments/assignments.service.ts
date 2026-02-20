@@ -48,8 +48,46 @@ export class AssignmentsService {
             submissions: true,
           },
         },
+        lesson: {
+          include: {
+            module: {
+              include: {
+                subject: {
+                  include: {
+                    classroom: {
+                      include: {
+                        students: {
+                          select: {
+                            studentId: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
+
+    // Automatically create submissions for all students in the classroom
+    const classroom = assignment.lesson.module.subject.classroom;
+    if (classroom && classroom.students.length > 0) {
+      const submissionData = classroom.students.map((cs) => ({
+        assignmentId: assignment.id,
+        studentId: cs.studentId,
+        status: 'DRAFT' as any,
+      }));
+
+      await this.prisma.submission.createMany({
+        data: submissionData,
+        skipDuplicates: true,
+      });
+
+      console.log(`✅ Created ${submissionData.length} submission records for assignment "${assignment.title}"`);
+    }
 
     return this.mapAssignment(assignment);
   }
@@ -898,6 +936,7 @@ export class AssignmentsService {
       select: {
         id: true,
         studentId: true,
+        status: true,
         assignment: {
           select: {
             id: true,
@@ -945,6 +984,7 @@ export class AssignmentsService {
     // Return only the context needed for redirect
     return {
       id: submission.id,
+      status: submission.status,
       assignment: {
         id: submission.assignment.id,
         lesson: {
@@ -1170,11 +1210,11 @@ export class AssignmentsService {
       throw new NotFoundException('Student tidak ditemukan');
     }
 
+    // Return ALL submissions for the student (not just graded ones)
+    // This is used by the assignments page to show all tasks
     const recentSubmissions = await this.prisma.submission.findMany({
       where: {
         studentId: student.id,
-        status: 'GRADED',
-        score: { not: null },
       },
       include: {
         assignment: {
@@ -1182,11 +1222,16 @@ export class AssignmentsService {
             id: true,
             title: true,
             type: true,
+            lessonId: true,
+            dueDate: true,
             xpReward: true,
           },
         },
       },
-      orderBy: { gradedAt: 'desc' },
+      orderBy: [
+        { status: 'asc' }, // DRAFT first, then SUBMITTED, then GRADED
+        { createdAt: 'desc' },
+      ],
       take: limit,
     });
 
